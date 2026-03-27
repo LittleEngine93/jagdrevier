@@ -636,7 +636,7 @@ function switchRevier(id) {
 
 let revDialogMode = 'new', revDialogTargetId = null;
 
-function openRevDialog(mode, id) {
+async function openRevDialog(mode, id) {
   revDialogMode = mode;
   revDialogTargetId = id || null;
   const dlg = document.getElementById('rev-dialog');
@@ -1010,7 +1010,7 @@ function startDrawHandler() {
   drawHandler.enable();
 }
 
-function toggleDraw() {
+async function toggleDraw() {
   drawMode = !drawMode;
   document.getElementById('btn-draw').classList.toggle('active', drawMode);
   document.getElementById('draw-panel').style.display = drawMode ? 'block' : 'none';
@@ -1023,14 +1023,14 @@ function toggleDraw() {
   }
 }
 
-function cancelDraw() {
+async function cancelDraw() {
   drawMode = false;
   document.getElementById('btn-draw').classList.remove('active');
   document.getElementById('draw-panel').style.display = 'none';
   if (drawHandler) { drawHandler.disable(); drawHandler = null; }
 }
 
-function finishDraw() { cancelDraw(); }
+async function finishDraw() { cancelDraw(); }
 
 async function clearGrenzen() {
   if (!confirm('Alle Reviergrenzen des aktiven Reviers löschen?')) return;
@@ -1040,7 +1040,7 @@ async function clearGrenzen() {
   renderGrenzen();
 }
 
-function renderGrenzen() {
+async function renderGrenzen() {
   grenzenLayer.clearLayers();
   const rev = getActiveRev();
   if (!rev || !rev.grenzen) return;
