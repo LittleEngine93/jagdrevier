@@ -1,17 +1,14 @@
-const CACHE = 'jagdrevier-v1';
-const ASSETS = [
-  './',
-  './index.html',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css',
-  'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js',
-  'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap'
+const CACHE = 'jagdrevier-v3';
+const STATIC = [
+  'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css',
+  'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js',
+  'https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css',
+  'https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js',
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ASSETS)).catch(() => {})
+    caches.open(CACHE).then(cache => cache.addAll(STATIC).catch(() => {}))
   );
   self.skipWaiting();
 });
@@ -26,6 +23,17 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+
+  // Always fetch index.html fresh from network
+  if (url.pathname.endsWith('/') || url.pathname.endsWith('index.html')) {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // For static assets: cache first, then network
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
