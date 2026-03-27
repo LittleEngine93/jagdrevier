@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Jagdrevier">
-<meta name="theme-color" content="#0f1a10">
+<meta name="theme-color" content="#0a0a0a">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
@@ -15,138 +15,159 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg:       #141210;
-  --bg2:      #1c1917;
-  --bg3:      #242220;
-  --border:   #2e2b28;
-  --border2:  #3d3a36;
-  --gold:     #c8a96e;
-  --gold2:    #e8c98e;
-  --text:     #e8e4de;
-  --text2:    #9a9690;
-  --text3:    #5a5652;
-  --red:      #e63946;
-  --green:    #52b788;
+  --bg:      #0a0a0a;
+  --bg2:     #111111;
+  --bg3:     #1a1a1a;
+  --border:  #222222;
+  --border2: #2e2e2e;
+  --accent:  #f97316;
+  --accent2: #fb923c;
+  --text:    #f0f0f0;
+  --text2:   #888888;
+  --text3:   #444444;
+  --red:     #e63946;
+  --green:   #52b788;
 }
 
 html { height: 100%; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); height: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100%; min-height: 100vh; overflow: hidden; position: relative; }
 
 /* ── HEADER ── */
 header {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
-  padding: 0 16px;
+  padding: 0 20px;
   display: flex; align-items: center; justify-content: space-between;
-  height: 46px; flex-shrink: 0;
+  height: 48px;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
 }
-.header-left { display: flex; align-items: center; gap: 12px; }
-.logo { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--gold); letter-spacing: 0.04em; }
-.logo span { color: var(--text2); font-size: 12px; font-family: 'IBM Plex Mono', monospace; font-weight: 400; margin-left: 4px; }
-#coord-display { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text3); }
+.header-left { display: flex; align-items: center; gap: 10px; }
+.logo { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+.logo span { color: var(--text3); font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 400; margin-left: 8px; text-transform: none; letter-spacing: 0; }
+.header-divider { width: 1px; height: 16px; background: var(--border2); }
+#coord-display { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text3); }
+#wind-indicator { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text2); }
+#wind-indicator svg { flex-shrink: 0; }
 
 /* ── REVIER BAR ── */
 #revier-bar {
-  background: var(--bg2);
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
-  padding: 0 16px;
-  display: flex; align-items: center; gap: 8px;
-  height: 38px; flex-shrink: 0;
-  overflow-x: auto;
+  padding: 0 20px;
+  display: flex; align-items: center; gap: 4px;
+  height: 36px; overflow-x: auto;
+  position: fixed; top: 48px; left: 0; right: 0; z-index: 1100;
 }
 .rev-tab {
-  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
-  background: var(--bg3); color: var(--text2);
-  border: 1px solid var(--border2); border-radius: 3px;
-  padding: 3px 10px; cursor: pointer; white-space: nowrap;
+  font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 500;
+  background: transparent; color: var(--text3);
+  border: none; border-bottom: 2px solid transparent;
+  padding: 0 12px; height: 36px; cursor: pointer; white-space: nowrap;
+  display: flex; align-items: center; gap: 4px;
   transition: all 0.15s;
 }
-.rev-tab:hover { border-color: var(--gold); color: var(--gold); }
-.rev-tab.active { background: var(--gold); color: #111; border-color: var(--gold); font-weight: 500; }
-.rev-tab.add-rev { background: transparent; border-style: dashed; }
-.rev-tab.add-rev:hover { background: var(--bg3); }
-.rev-rename-btn { font-size: 10px; margin-left: 3px; opacity: 0.5; }
+.rev-tab:hover { color: var(--text2); border-bottom-color: var(--border2); }
+.rev-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.rev-tab.add-rev { color: var(--text3); font-weight: 400; }
+.rev-tab.add-rev:hover { color: var(--accent); }
+.rev-rename-btn { font-size: 10px; margin-left: 2px; opacity: 0.4; }
 .rev-rename-btn:hover { opacity: 1; }
-.rev-del-btn { font-size: 10px; margin-left: 1px; opacity: 0.4; color: var(--red); }
+.rev-del-btn { font-size: 10px; margin-left: 1px; opacity: 0.3; color: var(--red); }
 .rev-del-btn:hover { opacity: 1; }
 
 /* ── CONTROLS ── */
 #controls {
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  padding: 6px 16px;
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  flex-shrink: 0;
+  background: rgba(10,10,10,0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 6px 20px;
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  position: fixed; top: 84px; left: 0; right: 0; z-index: 1100;
 }
-.ctrl-group { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
+.ctrl-group { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #000000; }
+.ctrl-sep { width: 1px; height: 16px; background: var(--border2); margin: 0 2px; }
 select {
   background: var(--bg3); color: var(--text);
-  border: 1px solid var(--border2); border-radius: 3px;
-  padding: 3px 6px; font-size: 11px; font-family: 'IBM Plex Sans', sans-serif;
+  border: 1px solid var(--border2); border-radius: 4px;
+  padding: 4px 8px; font-size: 11px; font-family: 'Inter', sans-serif;
+  outline: none;
 }
+select:focus { border-color: var(--accent); }
 button {
   background: var(--bg3); color: var(--text2);
-  border: 1px solid var(--border2); border-radius: 3px;
+  border: 1px solid var(--border2); border-radius: 4px;
   padding: 4px 10px; font-size: 11px; cursor: pointer;
-  font-family: 'IBM Plex Sans', sans-serif;
-  transition: all 0.15s;
+  font-family: 'Inter', sans-serif; font-weight: 500;
+  transition: all 0.12s;
+  display: flex; align-items: center; gap: 4px;
 }
-button:hover { background: var(--border2); color: var(--text); }
-button.active { background: var(--gold); color: #111; border-color: var(--gold); font-weight: 500; }
-button.danger { border-color: #5a2020; color: #c04040; }
-button.danger:hover { background: #2a1010; color: var(--red); }
+button:hover { background: var(--border2); color: var(--text); border-color: var(--text3); }
+button.active { background: var(--accent); color: #000; border-color: var(--accent); }
+button.active:hover { background: var(--accent2); }
+button.danger { border-color: #3a1515; color: #883333; }
+button.danger:hover { background: #1a0808; color: var(--red); border-color: #662222; }
 
 /* ── MAP ── */
-#map { flex: 1; min-height: 300px; }
+#map { position: fixed; inset: 0; z-index: 1000; }
 
 /* ── LEGEND ── */
 .legend {
-  position: absolute; bottom: 50px; left: 10px; z-index: 1000;
-  background: rgba(20,18,16,0.93); border: 1px solid var(--border2);
-  border-radius: 5px; padding: 10px 12px; font-size: 10px; color: var(--text2);
+  position: fixed; bottom: 40px; left: 10px; z-index: 1200;
+  background: rgba(10,10,10,0.92); border: 1px solid var(--border2);
+  border-radius: 4px; padding: 7px 9px; font-size: 10px; color: var(--text2);
+  backdrop-filter: blur(4px);
 }
-.legend-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text3); margin-bottom: 6px; letter-spacing: 0.08em; }
-.legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.legend-title { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--text3); margin-bottom: 4px; letter-spacing: 0.1em; text-transform: uppercase; }
+.legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
 .legend-row:last-child { margin-bottom: 0; }
 .ldot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── STATS BAR ── */
 .stats-bar {
-  background: var(--bg2); border-top: 1px solid var(--border);
-  padding: 5px 16px; display: flex; gap: 20px; font-size: 10px;
-  color: var(--text3); flex-shrink: 0; font-family: 'IBM Plex Mono', monospace;
+  background: rgba(10,10,10,0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 0 20px; display: flex; gap: 0; font-size: 10px;
+  color: var(--text3); font-family: 'JetBrains Mono', monospace;
+  height: 32px; align-items: center;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 1100;
 }
-.stats-bar span b { color: var(--gold); font-weight: 500; }
+.stats-bar span { padding: 0 14px; border-right: 1px solid var(--border); height: 100%; display: flex; align-items: center; }
+.stats-bar span:first-child { padding-left: 0; }
+.stats-bar span b { color: var(--accent); font-weight: 500; margin-left: 4px; }
+.stats-bar #st-save { margin-left: auto; border-right: none; border-left: 1px solid var(--border); }
 
 /* ── ADD HOCHSITZ PANEL ── */
 #add-panel {
-  position: absolute; bottom: 56px; right: 16px; z-index: 1000;
+  position: fixed; bottom: 40px; right: 16px; z-index: 1200;
   background: var(--bg2); border: 1px solid var(--border2);
   border-radius: 6px; padding: 14px; min-width: 230px; display: none;
-  box-shadow: 0 6px 30px rgba(0,0,0,0.7);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
 }
-#add-panel h3 { font-size: 12px; font-weight: 500; margin-bottom: 10px; color: var(--gold); font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.05em; }
+#add-panel h3 { font-size: 11px; font-weight: 600; margin-bottom: 10px; color: var(--accent); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
 #add-panel input {
   width: 100%; background: var(--bg); color: var(--text);
-  border: 1px solid var(--border2); border-radius: 3px;
-  padding: 5px 8px; font-size: 12px; margin-bottom: 8px;
-  font-family: 'IBM Plex Mono', monospace;
+  border: 1px solid var(--border2); border-radius: 4px;
+  padding: 6px 8px; font-size: 12px; margin-bottom: 8px;
+  font-family: 'JetBrains Mono', monospace; outline: none;
 }
-#add-panel input:focus { outline: none; border-color: var(--gold); }
+#add-panel input:focus { border-color: var(--accent); }
 #add-panel .btn-row { display: flex; gap: 6px; }
 #add-panel .btn-row button { flex: 1; padding: 5px; }
-#add-panel .btn-row .save { background: var(--gold); color: #111; border-color: var(--gold); font-weight: 600; }
-#add-panel .btn-row .save:hover { background: var(--gold2); }
-#add-hint { font-size: 10px; color: var(--text3); margin-top: 6px; font-family: 'IBM Plex Mono', monospace; }
+#add-panel .btn-row .save { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+#add-panel .btn-row .save:hover { background: var(--accent2); }
+#add-hint { font-size: 10px; color: var(--text3); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
 
 /* ── MODAL OVERLAY ── */
 #modal-overlay {
   position: fixed; inset: 0; z-index: 2000;
-  background: rgba(0,0,0,0.75); display: none;
+  background: rgba(0,0,0,0.85); display: none;
   align-items: center; justify-content: center;
 }
 #modal-overlay.show { display: flex; }
@@ -154,82 +175,82 @@ button.danger:hover { background: #2a1010; color: var(--red); }
   background: var(--bg2); border: 1px solid var(--border2);
   border-radius: 8px; padding: 20px; width: 380px; max-width: 95vw;
   max-height: 85vh; overflow-y: auto;
-  box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+  box-shadow: 0 16px 64px rgba(0,0,0,0.9);
 }
-#modal-box h2 { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--gold); margin-bottom: 14px; }
+#modal-box h2 { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.06em; }
 .form-row { margin-bottom: 10px; }
-.form-row label { display: block; font-size: 10px; color: var(--text2); margin-bottom: 4px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+.form-row label { display: block; font-size: 10px; color: var(--text3); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
 .form-row input, .form-row select, .form-row textarea {
   width: 100%; background: var(--bg); color: var(--text);
-  border: 1px solid var(--border2); border-radius: 3px;
-  padding: 7px 9px; font-size: 12px; font-family: 'IBM Plex Sans', sans-serif;
+  border: 1px solid var(--border2); border-radius: 4px;
+  padding: 7px 9px; font-size: 12px; font-family: 'Inter', sans-serif; outline: none;
 }
-.form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: var(--gold); }
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: var(--accent); }
 .form-row textarea { resize: vertical; min-height: 60px; }
 
 /* photo preview */
 #photo-preview { margin-top: 6px; max-width: 100%; max-height: 140px; border-radius: 4px; display: none; }
 .upload-area {
-  border: 1.5px dashed var(--border2); border-radius: 4px;
+  border: 1px dashed var(--border2); border-radius: 4px;
   padding: 12px; text-align: center; font-size: 11px; color: var(--text3);
   cursor: pointer; transition: border-color 0.15s;
 }
-.upload-area:hover { border-color: var(--gold); color: var(--gold2); }
+.upload-area:hover { border-color: var(--accent); color: var(--accent2); }
 
 .modal-btns { display: flex; gap: 8px; margin-top: 14px; }
 .modal-btns button { flex: 1; padding: 8px; font-size: 12px; }
-.modal-btns .primary { background: var(--gold); color: #111; border-color: var(--gold); font-weight: 600; }
-.modal-btns .primary:hover { background: var(--gold2); }
+.modal-btns .primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+.modal-btns .primary:hover { background: var(--accent2); }
 
 /* ── ABSCHUSS LIST IN POPUP ── */
 .hs-popup { font-size: 12px; min-width: 190px; max-width: 260px; }
-.hs-popup .pname { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 15px; margin-bottom: 8px; color: #222; }
-.hs-popup .row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-bottom: 1px solid #e8e4de22; font-size: 11px; }
+.hs-popup .pname { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #111; text-transform: uppercase; letter-spacing: 0.04em; }
+.hs-popup .row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-bottom: 1px solid #00000015; font-size: 11px; }
 .hs-popup .row span:first-child { color: #888; }
 .hs-popup .ab-list { margin-top: 6px; max-height: 110px; overflow-y: auto; }
 .hs-popup .ab-item { font-size: 10px; padding: 3px 0; border-bottom: 1px solid #eee3; display: flex; align-items: center; gap: 6px; }
 .hs-popup .ab-item img { width: 28px; height: 28px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
 .hs-popup .add-btn {
   margin-top: 8px; width: 100%; padding: 6px;
-  background: var(--gold,#c8a96e); border: none; border-radius: 3px;
-  cursor: pointer; font-size: 11px; font-weight: 600; color: #111;
+  background: #f97316; border: none; border-radius: 4px;
+  cursor: pointer; font-size: 11px; font-weight: 600; color: #000;
 }
 .hs-popup .del-hs-btn {
   margin-top: 4px; width: 100%; padding: 4px;
-  background: transparent; border: 1px solid #c04040; border-radius: 3px;
+  background: transparent; border: 1px solid #c04040; border-radius: 4px;
   cursor: pointer; font-size: 10px; color: #c04040;
 }
 
 /* ── NEW REVIER DIALOG ── */
 #rev-dialog {
   position: fixed; inset: 0; z-index: 3000;
-  background: rgba(0,0,0,0.8); display: none;
+  background: rgba(0,0,0,0.85); display: none;
   align-items: center; justify-content: center;
 }
 #rev-dialog.show { display: flex; }
 #rev-dialog-box {
   background: var(--bg2); border: 1px solid var(--border2);
   border-radius: 8px; padding: 20px; width: 300px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.9);
 }
-#rev-dialog-box h3 { font-family: 'Playfair Display', serif; font-size: 14px; color: var(--gold); margin-bottom: 12px; }
+#rev-dialog-box h3 { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
 #rev-dialog-box input {
   width: 100%; background: var(--bg); color: var(--text);
-  border: 1px solid var(--border2); border-radius: 3px;
-  padding: 7px 9px; font-size: 13px; font-family: 'IBM Plex Mono', monospace;
-  margin-bottom: 10px;
+  border: 1px solid var(--border2); border-radius: 4px;
+  padding: 7px 9px; font-size: 13px; font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 10px; outline: none;
 }
-#rev-dialog-box input:focus { outline: none; border-color: var(--gold); }
+#rev-dialog-box input:focus { border-color: var(--accent); }
 
 /* ── DRAW PANEL ── */
 #draw-panel {
-  position: absolute; bottom: 56px; right: 16px; z-index: 1000;
+  position: fixed; bottom: 40px; right: 16px; z-index: 1200;
   background: var(--bg2); border: 1px solid var(--border2);
   border-radius: 6px; padding: 14px; min-width: 230px; display: none;
   box-shadow: 0 6px 30px rgba(0,0,0,0.7);
 }
-#draw-panel h3 { font-size: 12px; font-weight: 500; margin-bottom: 10px; color: var(--gold); font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.05em; }
-#draw-panel .hint { font-size: 10px; color: var(--text3); margin-top: 8px; font-family: 'IBM Plex Mono', monospace; line-height: 1.6; }
+#draw-panel h3 { font-size: 11px; font-weight: 600; margin-bottom: 10px; color: var(--accent); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+#draw-panel .hint { font-size: 10px; color: var(--text3); margin-top: 8px; font-family: 'JetBrains Mono', monospace; line-height: 1.6; }
 .color-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
 .color-swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
 .color-swatch.selected { border-color: #fff; }
@@ -240,7 +261,8 @@ button.danger:hover { background: #2a1010; color: var(--red); }
   border: 1px solid #9b1c1c;
   border-radius: 3px;
   color: #e05555;
-  font-family: 'IBM Plex Mono', monospace;
+  backdrop-filter: blur(4px);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   padding: 1px 5px;
   box-shadow: none;
@@ -248,30 +270,42 @@ button.danger:hover { background: #2a1010; color: var(--red); }
 }
 .distanz-label::before { display: none; }
 
-/* ── WIND PANEL ── */
-#wind-panel {
-  position: absolute; bottom: 50px; left: 10px; z-index: 1000;
-  background: rgba(20,18,16,0.93); border: 1px solid var(--border2);
-  border-radius: 5px; padding: 10px 12px; font-size: 10px; color: var(--text2);
+/* ── SCHUSSRICHTUNG COMPASS ── */
+.kompass-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 3px;
+  margin: 8px 0 4px;
 }
-#wind-panel .wind-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text3); margin-bottom: 8px; letter-spacing: 0.08em; }
-#wind-panel .wind-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-#wind-panel .wind-row:last-child { margin-bottom: 0; }
-#wind-panel .wind-time { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text3); width: 38px; flex-shrink: 0; }
-#wind-panel .wind-info { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text2); }
-#wind-panel .wind-arrow-wrap { width: 22px; height: 22px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.kompass-btn {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 3px; color: var(--text2); font-size: 10px;
+  padding: 4px 2px; text-align: center; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; transition: all 0.12s;
+}
+.kompass-btn:hover { border-color: var(--accent); color: var(--accent); }
+.kompass-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+.kompass-btn.center { background: transparent; border: none; cursor: default; }
 
 /* scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.leaflet-top { top: 122px !important; }
+.leaflet-control-zoom { margin-top: 0 !important; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="header-left">
-    <div class="logo">🎯 Jagdrevier<span id="revier-title">—</span></div>
+    <div class="logo">⊕ Jagdrevier<span id="revier-title">—</span></div>
+  </div>
+  <div id="wind-indicator">
+    <svg id="wind-arrow-svg" width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+      <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2" stroke-linecap="round"/>
+      <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>
+    <span id="wind-label" style="color:var(--text3);">—</span>
   </div>
   <span id="coord-display">Maus über Karte bewegen</span>
 </header>
@@ -301,6 +335,8 @@ button.danger:hover { background: #2a1010; color: var(--red); }
     </select>
   </div>
   <button id="btn-add" onclick="toggleAdd()" style="margin-left:auto;">+ Hochsitz</button>
+  <button id="btn-schuss" onclick="toggleSchussrichtungen()">↗ Schussrichtungen</button>
+  <button id="btn-wind-match" onclick="toggleWindMatch()">🎯 Passende Hochsitze</button>
   <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
   <button id="btn-draw" onclick="toggleDraw()">✏ Reviergrenze</button>
   <button id="btn-clear-draw" onclick="clearGrenzen()" class="danger" title="Alle Reviergrenzen löschen">✕ Grenze</button>
@@ -312,19 +348,12 @@ button.danger:hover { background: #2a1010; color: var(--red); }
 <div id="map"></div>
 
 <!-- LEGEND -->
-<div class="legend">
-  <div class="legend-title">ABSCHÜSSE</div>
-  <div class="legend-row"><div style="width:22px;height:22px;border-radius:50%;background:#111111;border:1.5px solid #333333;flex-shrink:0;"></div>Kein Abschuss</div>
-  <div class="legend-row"><div style="width:22px;height:22px;border-radius:50%;background:#111111;border:3px solid #52b788;flex-shrink:0;"></div>1–3</div>
-  <div class="legend-row"><div style="width:26px;height:26px;border-radius:50%;background:#111111;border:6px solid #95d5b2;flex-shrink:0;"></div>4–7</div>
-  <div class="legend-row"><div style="width:30px;height:30px;border-radius:50%;background:#111111;border:9px solid #f4a261;flex-shrink:0;"></div>8–12</div>
-  <div class="legend-row"><div style="width:34px;height:34px;border-radius:50%;background:#111111;border:12px solid #e63946;flex-shrink:0;"></div>13+ Hotspot</div>
-</div>
-
-<!-- WIND PANEL -->
-<div id="wind-panel">
-  <div class="wind-title">WIND</div>
-  <div id="wind-rows"><div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">Lade...</div></div>
+<div class="legend" style="padding:7px 9px;">
+  <div class="legend-title" style="margin-bottom:4px;">ABSCHÜSSE</div>
+  <div class="legend-row" style="margin-bottom:2px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:1.5px dashed #ffffff;flex-shrink:0;"></div><span style="font-size:9px;">0</span></div>
+  <div class="legend-row" style="margin-bottom:2px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #52b788;flex-shrink:0;"></div><span style="font-size:9px;">1–2</span></div>
+  <div class="legend-row" style="margin-bottom:2px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #f5c518;flex-shrink:0;"></div><span style="font-size:9px;">3–5</span></div>
+  <div class="legend-row"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #e63946;flex-shrink:0;"></div><span style="font-size:9px;">6+</span></div>
 </div>
 
 <!-- DRAW PANEL -->
@@ -588,19 +617,18 @@ function getHsLabel(name) {
 }
 
 function getColor(n) {
-  if (n === 0)  return { stroke: '#555',    glow: null };
-  if (n <= 3)   return { stroke: '#52b788', glow: '#52b78845' };
-  if (n <= 7)   return { stroke: '#95d5b2', glow: '#95d5b235' };
-  if (n <= 12)  return { stroke: '#f4a261', glow: '#f4a26135' };
+  if (n === 0)  return { stroke: '#ffffff', glow: null };
+  if (n <= 2)   return { stroke: '#52b788', glow: '#52b78845' };
+  if (n <= 5)   return { stroke: '#f5c518', glow: '#f5c51835' };
   return               { stroke: '#e63946', glow: '#e6394635' };
 }
 function getRingW(n) {
-  if (n === 0) return 0;
-  return Math.min(14, 3 + (n - 1) * 0.85);
+  return n === 0 ? 0 : 4;
 }
 
 function updateMarkers() {
   ml.clearLayers();
+  if (schussMode) schussLayer.clearLayers();
   const rev = getActiveRev();
   if (!rev) return;
   rev.hochsitze.forEach(hs => {
@@ -617,13 +645,17 @@ function updateMarkers() {
     const ringEl = n > 0
       ? `${c.glow ? `<circle cx="${cx}" cy="${cx}" r="${ringR + 4}" fill="${c.glow}"/>` : ''}
          <circle cx="${cx}" cy="${cx}" r="${ringR}" fill="none" stroke="${c.stroke}" stroke-width="${ringW}" opacity="0.92"/>`
-      : `<circle cx="${cx}" cy="${cx}" r="${coreR + 4}" fill="none" stroke="#444" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>`;
+      : `<circle cx="${cx}" cy="${cx}" r="${coreR + 4}" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>`;
     const svg = `<svg width="${sz}" height="${sz}" xmlns="http://www.w3.org/2000/svg">
       ${ringEl}
       <circle cx="${cx}" cy="${cx}" r="${coreR}" fill="#111111" stroke="#333333" stroke-width="1.5"/>
       <text x="${cx}" y="${cx + fontSize * 0.38}" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="#ffffff" font-family="'IBM Plex Mono','Courier New',monospace">${label}</text>
     </svg>`;
-    const icon = L.divIcon({ html: svg, className: '', iconSize: [sz,sz], iconAnchor: [cx,cx] });
+    const matched = isWindMatch(hs);
+    const markerHtml = windMatchMode
+      ? `<div style="opacity:${matched ? 1 : 0.2};transition:opacity 0.3s;">${svg}</div>`
+      : svg;
+    const icon = L.divIcon({ html: markerHtml, className: '', iconSize: [sz,sz], iconAnchor: [cx,cx] });
 
     // build popup content
     const arts = {};
@@ -652,12 +684,21 @@ function updateMarkers() {
       <div class="row"><span>Wildarten</span><span>${artStr}</span></div>
       <div class="row"><span>GPS</span><span style="font-size:10px">${hs.lat.toFixed(5)}, ${hs.lon.toFixed(5)}</span></div>
       ${abList}
+      <div style="font-size:10px;color:#888;margin-top:8px;margin-bottom:3px;font-family:'JetBrains Mono',monospace;letter-spacing:0.06em;">SCHUSSRICHTUNGEN</div>
+      <div class="kompass-grid">
+        ${['NW','N','NO','W','·','O','SW','S','SO'].map(dir => dir === '·'
+          ? `<div class="kompass-btn center">·</div>`
+          : `<div class="kompass-btn ${(hs.schussrichtungen||[]).includes(dir)?'active':''}"
+               onclick="toggleSchussDir(${hs.id},'${dir}',this)">${dir}</div>`
+        ).join('')}
+      </div>
       <button class="add-btn" onclick="openModal(${hs.id})">+ Abschuss eintragen</button>
       <button class="del-hs-btn" onclick="deleteHS(${hs.id})">Hochsitz löschen</button>
     </div>`;
     L.marker([hs.lat, hs.lon], { icon }).bindPopup(popup).addTo(ml);
   });
   updateStats();
+  if (schussMode) drawSchussrichtungen();
 }
 
 function updateStats() {
@@ -1022,6 +1063,138 @@ map.on('click', function(e) {
 map.on('zoomend', function() {
   if (distanzMode && distanzCenter) drawDistanzRinge();
 });
+
+// ═══════════════════════════════════════════
+//  SCHUSSRICHTUNGEN
+// ═══════════════════════════════════════════
+const schussLayer = L.layerGroup().addTo(map);
+let schussMode = false;
+
+const DIR_ANGLES = { N:0, NO:45, O:90, SO:135, S:180, SW:225, W:270, NW:315 };
+const ARROW_LEN = 0.0015; // ~300m in degrees
+
+function toggleSchussDir(hsId, dir, el) {
+  const rev = getActiveRev();
+  const hs = rev.hochsitze.find(h => h.id === hsId);
+  if (!hs) return;
+  if (!hs.schussrichtungen) hs.schussrichtungen = [];
+  const idx = hs.schussrichtungen.indexOf(dir);
+  if (idx >= 0) {
+    hs.schussrichtungen.splice(idx, 1);
+    el.classList.remove('active');
+  } else {
+    hs.schussrichtungen.push(dir);
+    el.classList.add('active');
+  }
+  saveData();
+  if (schussMode) drawSchussrichtungen();
+}
+
+function toggleSchussrichtungen() {
+  schussMode = !schussMode;
+  document.getElementById('btn-schuss').classList.toggle('active', schussMode);
+  if (schussMode) drawSchussrichtungen();
+  else schussLayer.clearLayers();
+}
+
+function drawSchussrichtungen() {
+  schussLayer.clearLayers();
+  const rev = getActiveRev();
+  if (!rev) return;
+  rev.hochsitze.forEach(hs => {
+    if (!hs.schussrichtungen || hs.schussrichtungen.length === 0) return;
+    hs.schussrichtungen.forEach(dir => {
+      const angleDeg = DIR_ANGLES[dir];
+      const angleRad = (angleDeg - 90) * Math.PI / 180;
+      // lat/lng offset - correct for longitude compression
+      const latOffset = Math.sin(angleRad + Math.PI/2) * ARROW_LEN;
+      const lngOffset = Math.cos(angleRad + Math.PI/2) * ARROW_LEN / Math.cos(hs.lat * Math.PI / 180);
+      const endLat = hs.lat + Math.cos(angleDeg * Math.PI / 180) * ARROW_LEN;
+      const endLng = hs.lon + Math.sin(angleDeg * Math.PI / 180) * ARROW_LEN / Math.cos(hs.lat * Math.PI / 180);
+
+      // Arrow line
+      const line = L.polyline([[hs.lat, hs.lon], [endLat, endLng]], {
+        color: '#f97316', weight: 2, opacity: 0.9
+      });
+
+      // Arrowhead using rotated marker
+      const headSvg = `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"
+        style="transform:rotate(${angleDeg}deg);transform-origin:center;">
+        <polygon points="10,1 18,19 10,14 2,19" fill="#f97316" opacity="0.9"/>
+      </svg>`;
+      const headIcon = L.divIcon({ html: headSvg, className: '', iconSize: [20,20], iconAnchor: [10,10] });
+      const head = L.marker([endLat, endLng], { icon: headIcon });
+
+      line.addTo(schussLayer);
+      head.addTo(schussLayer);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════
+//  WIND-MATCH
+// ═══════════════════════════════════════════
+let windMatchMode = false;
+
+// Adjacent directions (±1 step on compass rose)
+const DIR_NEIGHBORS = {
+  N:  ['NW','N','NO'],
+  NO: ['N','NO','O'],
+  O:  ['NO','O','SO'],
+  SO: ['O','SO','S'],
+  S:  ['SO','S','SW'],
+  SW: ['S','SW','W'],
+  W:  ['SW','W','NW'],
+  NW: ['W','NW','N']
+};
+
+function toggleWindMatch() {
+  windMatchMode = !windMatchMode;
+  document.getElementById('btn-wind-match').classList.toggle('active', windMatchMode);
+  updateMarkers();
+}
+
+function isWindMatch(hs) {
+  if (!windMatchMode) return true;
+  if (!currentWindCompass) return false;
+  if (!hs.schussrichtungen || hs.schussrichtungen.length === 0) return false;
+  const validDirs = DIR_NEIGHBORS[currentWindCompass] || [currentWindCompass];
+  return hs.schussrichtungen.some(dir => validDirs.includes(dir));
+}
+
+// ═══════════════════════════════════════════
+//  WIND
+// ═══════════════════════════════════════════
+function degToCompass(deg) {
+  const dirs = ['N','NO','O','SO','S','SW','W','NW'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
+let currentWindCompass = null;
+
+async function fetchWind() {
+  try {
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.6138&longitude=9.7731&current_weather=true&wind_speed_unit=kmh');
+    const data = await res.json();
+    const deg = data.current_weather.winddirection;
+    const spd = Math.round(data.current_weather.windspeed);
+    const compass = degToCompass(deg);
+    currentWindCompass = compass;
+    const arrowDeg = (deg + 180) % 360;
+    document.getElementById('wind-arrow-svg').style.transform = `rotate(${arrowDeg}deg)`;
+    document.getElementById('wind-label').textContent = `${compass} ${spd} km/h`;
+  } catch(e) {
+    document.getElementById('wind-label').textContent = '—';
+  }
+}
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+renderRevierBar();
+updateMarkers();
+renderGrenzen();
+fetchWind();
 
 </script>
 <script>
