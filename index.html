@@ -14,6 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -459,40 +460,118 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 <script>
 // ═══════════════════════════════════════════
+//  SUPABASE
+// ═══════════════════════════════════════════
+const SUPA_URL  = 'https://yjdwaoyvzzhrrijedume.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqZHdhb3l2enpocnJqaWVkdW1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDcwODIsImV4cCI6MjA5MDIyMzA4Mn0.mu4xjdQ3jTaSItaMOEcY4ldDCi666AKjbHMBHrcj7y0';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ═══════════════════════════════════════════
 //  DATA MODEL
 // ═══════════════════════════════════════════
-const STORAGE_KEY = 'jagdrevier_v2';
-
-function defaultData() {
-  return {
-    reviere: [
-      { id: 'rev1', name: 'Revier 1', hochsitze: [], nextId: 1 }
-    ],
-    activeRevId: 'rev1',
-    nextRevId: 2
-  };
-}
-
-let data = loadData();
-
-function loadData() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
-  return defaultData();
-}
-
-function saveData() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    const el = document.getElementById('st-save');
-    if (el) { el.textContent = '● gespeichert'; el.style.color = '#52b788'; setTimeout(()=>{ el.textContent='● gespeichert'; el.style.color='#3d3a36'; }, 1500); }
-  } catch(e) { console.warn('localStorage voll?', e); }
-}
+let data = {
+  reviere: [],
+  activeRevId: null,
+  nextRevId: 1
+};
 
 function getActiveRev() {
   return data.reviere.find(r => r.id === data.activeRevId) || data.reviere[0];
+}
+
+function showSaveStatus(ok) {
+  const el = document.getElementById('st-save');
+  if (!el) return;
+  if (ok) {
+    el.textContent = '● gespeichert'; el.style.color = '#52b788';
+    setTimeout(() => { el.textContent = '● gespeichert'; el.style.color = '#3d3a36'; }, 1500);
+  } else {
+    el.textContent = '● Fehler'; el.style.color = '#e63946';
+  }
+}
+
+// ── Load all data from Supabase ──
+async function loadData() {
+  try {
+    const { data: revData, error: revErr } = await sb.from('reviere').select('*');
+    if (revErr) throw revErr;
+
+    if (!revData || revData.length === 0) {
+      // First time: create default revier
+      const { data: newRev, error } = await sb.from('reviere').insert({
+        id: 'rev1', name: 'Revier 1', next_id: 1, grenzen: []
+      }).select().single();
+      if (error) throw error;
+      data.reviere = [{ id: newRev.id, name: newRev.name, hochsitze: [], nextId: newRev.next_id, grenzen: newRev.grenzen || [] }];
+    } else {
+      data.reviere = await Promise.all(revData.map(async rev => {
+        const { data: hsData } = await sb.from('hochsitze').select('*').eq('revier_id', rev.id);
+        const hochsitze = (hsData || []).map(h => ({
+          id: h.id, name: h.name, lat: h.lat, lon: h.lon,
+          abschuesse: h.abschuesse || [],
+          schussrichtungen: h.schussrichtungen || []
+        }));
+        return { id: rev.id, name: rev.name, nextId: rev.next_id, grenzen: rev.grenzen || [], hochsitze };
+      }));
+    }
+
+    // Restore active revier from localStorage
+    const savedActive = localStorage.getItem('jagdrevier_activeRev');
+    data.activeRevId = (savedActive && data.reviere.find(r => r.id === savedActive))
+      ? savedActive : data.reviere[0].id;
+    data.nextRevId = data.reviere.length + 1;
+
+  } catch(e) {
+    console.error('Supabase loadData error:', e);
+    // Fallback to localStorage if offline
+    try {
+      const raw = localStorage.getItem('jagdrevier_v2');
+      if (raw) { const d = JSON.parse(raw); data = d; }
+    } catch(e2) {}
+  }
+}
+
+// ── Save revier meta (name, grenzen, next_id) ──
+async function saveRevierMeta(rev) {
+  try {
+    await sb.from('reviere').upsert({
+      id: rev.id, name: rev.name, next_id: rev.nextId, grenzen: rev.grenzen || []
+    });
+    showSaveStatus(true);
+  } catch(e) { console.error(e); showSaveStatus(false); }
+}
+
+// ── Save single Hochsitz ──
+async function saveHochsitz(hs, revId) {
+  try {
+    await sb.from('hochsitze').upsert({
+      id: hs.id, revier_id: revId, name: hs.name,
+      lat: hs.lat, lon: hs.lon,
+      abschuesse: hs.abschuesse || [],
+      schussrichtungen: hs.schussrichtungen || []
+    });
+    showSaveStatus(true);
+  } catch(e) { console.error(e); showSaveStatus(false); }
+}
+
+// ── Delete Hochsitz ──
+async function deleteHochsitzDB(id, revId) {
+  try {
+    await sb.from('hochsitze').delete().eq('id', id).eq('revier_id', revId);
+  } catch(e) { console.error(e); }
+}
+
+// ── Delete Revier ──
+async function deleteRevierDB(id) {
+  try {
+    await sb.from('reviere').delete().eq('id', id);
+  } catch(e) { console.error(e); }
+}
+
+// Compatibility shim - saveData now saves active revier to localStorage only
+function saveData() {
+  localStorage.setItem('jagdrevier_activeRev', data.activeRevId || '');
+  showSaveStatus(true);
 }
 
 // ═══════════════════════════════════════════
@@ -549,7 +628,7 @@ function renderRevierBar() {
 
 function switchRevier(id) {
   data.activeRevId = id;
-  saveData();
+  localStorage.setItem('jagdrevier_activeRev', id);
   renderRevierBar();
   updateMarkers();
   renderGrenzen();
@@ -570,16 +649,18 @@ function openRevDialog(mode, id) {
 
 function closeRevDialog() { document.getElementById('rev-dialog').classList.remove('show'); }
 
-function saveRevDialog() {
+async function saveRevDialog() {
   const name = document.getElementById('rev-dialog-input').value.trim();
   if (!name) return;
   if (revDialogMode === 'new') {
-    const newId = 'rev' + data.nextRevId++;
-    data.reviere.push({ id: newId, name, hochsitze: [], nextId: 1 });
+    const newId = 'rev' + Date.now();
+    const newRev = { id: newId, name, hochsitze: [], nextId: 1, grenzen: [] };
+    data.reviere.push(newRev);
     data.activeRevId = newId;
+    await saveRevierMeta(newRev);
   } else {
     const rev = data.reviere.find(r => r.id === revDialogTargetId);
-    if (rev) rev.name = name;
+    if (rev) { rev.name = name; await saveRevierMeta(rev); }
   }
   saveData();
   closeRevDialog();
@@ -591,10 +672,11 @@ document.getElementById('rev-dialog-input').addEventListener('keydown', e => { i
 
 function renameRevier(id) { openRevDialog('rename', id); }
 
-function deleteRevier(id) {
+async function deleteRevier(id) {
   const rev = data.reviere.find(r => r.id === id);
   if (!rev) return;
   if (!confirm(`Revier "${rev.name}" wirklich löschen? Alle Hochsitze und Abschüsse gehen verloren.`)) return;
+  await deleteRevierDB(id);
   data.reviere = data.reviere.filter(r => r.id !== id);
   if (data.activeRevId === id) data.activeRevId = data.reviere[0].id;
   saveData();
@@ -717,28 +799,28 @@ function updateStats() {
 // ═══════════════════════════════════════════
 //  DELETE HOCHSITZ
 // ═══════════════════════════════════════════
-function deleteHS(id) {
+async function deleteHS(id) {
   const rev = getActiveRev();
   const hs = rev.hochsitze.find(h=>h.id===id);
   if (!hs) return;
   if (!confirm(`Hochsitz "${hs.name}" wirklich löschen?`)) return;
   rev.hochsitze = rev.hochsitze.filter(h=>h.id!==id);
   map.closePopup();
-  saveData();
+  await deleteHochsitzDB(id, rev.id);
   updateMarkers();
 }
 
 // ═══════════════════════════════════════════
 //  DELETE ABSCHUSS ENTRY
 // ═══════════════════════════════════════════
-function deleteAbschuss(hsId, idx) {
+async function deleteAbschuss(hsId, idx) {
   if (!confirm('Eintrag wirklich löschen?')) return;
   const rev = getActiveRev();
   const hs = rev.hochsitze.find(h => h.id === hsId);
   if (!hs) return;
   hs.abschuesse.splice(idx, 1);
   map.closePopup();
-  saveData();
+  await saveHochsitz(hs, rev.id);
   updateMarkers();
 }
 
@@ -794,7 +876,7 @@ function previewPhoto(event) {
   reader.readAsDataURL(file);
 }
 
-function saveAbschuss() {
+async function saveAbschuss() {
   const art = document.getElementById('ab-art').value;
   const datum = document.getElementById('ab-datum').value;
   if (!datum) { alert('Bitte Datum angeben'); return; }
@@ -802,15 +884,14 @@ function saveAbschuss() {
   const hs = rev.hochsitze.find(h => h.id === modalHsId);
   if (!hs) return;
   const entry = {
-    art,
-    datum,
+    art, datum,
     gewicht: document.getElementById('ab-gewicht').value ? parseFloat(document.getElementById('ab-gewicht').value) : null,
     geschlecht: document.getElementById('ab-geschlecht').value || null,
     notiz: document.getElementById('ab-notiz').value.trim() || null,
     foto: pendingFotoBase64 || null
   };
   hs.abschuesse.push(entry);
-  saveData();
+  await saveHochsitz(hs, rev.id);
   closeModal();
   updateMarkers();
 }
@@ -835,17 +916,19 @@ function cancelAdd() {
   if (tempM) { map.removeLayer(tempM); tempM = null; }
   pendingLL = null;
 }
-function saveHS() {
+async function saveHS() {
   const name = document.getElementById('new-name').value.trim();
   if (!name) { alert('Bitte Namen eingeben'); return; }
   if (!pendingLL) { alert('Bitte erst auf die Karte klicken'); return; }
   const rev = getActiveRev();
-  rev.hochsitze.push({ id: rev.nextId++, name, lat: pendingLL.lat, lon: pendingLL.lng, abschuesse: [] });
+  const hs = { id: rev.nextId++, name, lat: pendingLL.lat, lon: pendingLL.lng, abschuesse: [], schussrichtungen: [] };
+  rev.hochsitze.push(hs);
   if (tempM) { map.removeLayer(tempM); tempM = null; }
   cancelAdd();
   document.getElementById('new-name').value = '';
   pendingLL = null;
-  saveData();
+  await saveHochsitz(hs, rev.id);
+  await saveRevierMeta(rev);
   updateMarkers();
 }
 document.getElementById('new-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveHS(); });
@@ -949,11 +1032,11 @@ function cancelDraw() {
 
 function finishDraw() { cancelDraw(); }
 
-function clearGrenzen() {
+async function clearGrenzen() {
   if (!confirm('Alle Reviergrenzen des aktiven Reviers löschen?')) return;
   const rev = getActiveRev();
   rev.grenzen = [];
-  saveData();
+  await saveRevierMeta(rev);
   renderGrenzen();
 }
 
@@ -971,7 +1054,7 @@ function renderGrenzen() {
 }
 
 // Listen for drawn shapes
-map.on(L.Draw.Event.CREATED, function(e) {
+map.on(L.Draw.Event.CREATED, async function(e) {
   if (e.layerType === 'polyline') {
     const rev = getActiveRev();
     if (!rev.grenzen) rev.grenzen = [];
@@ -979,7 +1062,7 @@ map.on(L.Draw.Event.CREATED, function(e) {
       latlngs: e.layer.getLatLngs().map(ll => [ll.lat, ll.lng]),
       color: drawColor
     });
-    saveData();
+    await saveRevierMeta(rev);
     renderGrenzen();
     // restart so user can draw another line without toggling
     if (drawMode) startDrawHandler();
@@ -1086,7 +1169,7 @@ function toggleSchussDir(hsId, dir, el) {
     hs.schussrichtungen.push(dir);
     el.classList.add('active');
   }
-  saveData();
+  await saveHochsitz(hs, rev.id);
   if (schussMode) drawSchussrichtungen();
 }
 
@@ -1191,10 +1274,33 @@ async function fetchWind() {
 // ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
-renderRevierBar();
-updateMarkers();
-renderGrenzen();
-fetchWind();
+(async () => {
+  document.getElementById('st-save').textContent = '● Laden...';
+  document.getElementById('st-save').style.color = '#888';
+  await loadData();
+  renderRevierBar();
+  updateMarkers();
+  renderGrenzen();
+  fetchWind();
+
+  // Realtime sync: refresh when another user makes changes
+  sb.channel('public:hochsitze')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'hochsitze' }, async () => {
+      await loadData();
+      renderRevierBar();
+      updateMarkers();
+      renderGrenzen();
+    })
+    .subscribe();
+  sb.channel('public:reviere')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'reviere' }, async () => {
+      await loadData();
+      renderRevierBar();
+      updateMarkers();
+      renderGrenzen();
+    })
+    .subscribe();
+})();
 
 </script>
 <script>
