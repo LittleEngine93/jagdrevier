@@ -462,7 +462,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 // ═══════════════════════════════════════════
 //  SUPABASE
 // ═══════════════════════════════════════════
-const SUPA_URL  = 'https://yjdwaoyvzzhrrijedume.supabase.co';
+const SUPA_URL  = 'https://yjdwaoyvzzhrrjiedume.supabase.co';
 const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqZHdhb3l2enpocnJqaWVkdW1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDcwODIsImV4cCI6MjA5MDIyMzA4Mn0.mu4xjdQ3jTaSItaMOEcY4ldDCi666AKjbHMBHrcj7y0';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
@@ -511,7 +511,9 @@ async function loadData() {
           abschuesse: h.abschuesse || [],
           schussrichtungen: h.schussrichtungen || []
         }));
-        return { id: rev.id, name: rev.name, nextId: rev.next_id, grenzen: rev.grenzen || [], hochsitze };
+        const maxId = hochsitze.length > 0 ? Math.max(...hochsitze.map(h => h.id)) + 1 : 1;
+        const nextId = Math.max(rev.next_id || 1, maxId);
+        return { id: rev.id, name: rev.name, nextId, grenzen: rev.grenzen || [], hochsitze };
       }));
     }
 
@@ -921,6 +923,8 @@ async function saveHS() {
   if (!name) { alert('Bitte Namen eingeben'); return; }
   if (!pendingLL) { alert('Bitte erst auf die Karte klicken'); return; }
   const rev = getActiveRev();
+  if (!rev) { alert('Kein Revier geladen. Bitte Seite neu laden.'); return; }
+  if (!rev.nextId) rev.nextId = 1;
   const hs = { id: rev.nextId++, name, lat: pendingLL.lat, lon: pendingLL.lng, abschuesse: [], schussrichtungen: [] };
   rev.hochsitze.push(hs);
   if (tempM) { map.removeLayer(tempM); tempM = null; }
