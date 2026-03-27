@@ -1199,6 +1199,13 @@ fetchWind();
 </script>
 <script>
 if ('serviceWorker' in navigator) {
+  // Unregister all old service workers and clear caches, then register fresh
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
+  });
+  caches.keys().then(keys => {
+    keys.forEach(key => caches.delete(key));
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
