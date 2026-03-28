@@ -46,17 +46,20 @@ header {
   height: 72px;
   position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
 }
-.header-left { display: flex; align-items: center; gap: 10px; }
+.header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; overflow-x: auto; }
 .logo { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
 .logo span { color: var(--text3); font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 400; margin-left: 8px; text-transform: none; letter-spacing: 0; }
-.header-divider { width: 1px; height: 16px; background: var(--border2); }
-#coord-display { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text3); }
-#wind-indicator { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text2); }
+.header-sep { width: 1px; height: 24px; background: var(--border2); flex-shrink: 0; }
+#coord-display { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+#sun-indicator { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); flex-shrink: 0; white-space: nowrap; }
+.sun-sep { color: var(--border2); }
+#wind-indicator { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); }
 .wind-hour-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.wind-hour-label { font-size: 8px; color: var(--text3); letter-spacing: 0.06em; line-height: 1; }
+.wind-hour-label { font-size: 8px; color: var(--accent); letter-spacing: 0.06em; line-height: 1; }
 .wind-hour-arrow { flex-shrink: 0; }
-.wind-hour-info { font-size: 9px; color: var(--text2); white-space: nowrap; }
-.wind-hour-weather { font-size: 12px; line-height: 1; }
+.wind-hour-info { font-size: 9px; color: var(--accent); white-space: nowrap; }
+.wind-hour-weather { font-size: 12px; line-height: 1; color: var(--accent); }
 .wind-hour-sep { width: 1px; height: 28px; background: var(--border2); }
 
 /* ── REVIER BAR ── */
@@ -300,6 +303,31 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   box-shadow: 0 0 0 3px rgba(72,149,239,0.35);
 }
 
+/* ── GRENZE POPUP ── */
+.grenze-popup {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 12px; min-width: 200px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.7);
+  font-family: 'Inter', sans-serif;
+}
+.grenze-popup h4 { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.grenze-popup button { display: block; width: 100%; padding: 7px 10px; margin-bottom: 6px; background: var(--bg3); color: var(--text); border: 1px solid var(--border2); border-radius: 4px; font-size: 11px; cursor: pointer; text-align: left; font-family: 'Inter', sans-serif; transition: all 0.12s; }
+.grenze-popup button:hover { background: var(--border2); }
+.grenze-popup button:last-child { margin-bottom: 0; color: var(--red); border-color: #3a1515; }
+.grenze-popup button:last-child:hover { background: #1a0808; }
+.grenze-edit-hint { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2000; background: rgba(10,10,10,0.9); border: 1px solid var(--accent); border-radius: 4px; padding: 6px 14px; font-size: 11px; color: var(--accent); font-family: 'JetBrains Mono', monospace; display: none; }
+
+/* ── AUFGABEN ── */
+.aufgaben-icon {
+  width: 26px; height: 26px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
 /* scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -378,12 +406,21 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   <div class="header-left">
     <div class="logo">⊕ Jagdrevier<span id="revier-title">—</span></div>
   </div>
-  <div id="wind-indicator">
+  <div class="header-right">
+    <span id="coord-display">Maus über Karte bewegen</span>
+    <div class="header-sep"></div>
+    <div id="sun-indicator">
+      <span title="Sonnenaufgang">○ <span id="sun-rise">—</span></span>
+      <span class="sun-sep">·</span>
+      <span title="Sonnenuntergang">● <span id="sun-set">—</span></span>
+    </div>
+    <div class="header-sep"></div>
+    <div id="wind-indicator">
     <div class="wind-hour-block">
       <span class="wind-hour-label">Jetzt</span>
       <svg class="wind-hour-arrow" id="wind-arrow-0" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-0">—</span>
       <span class="wind-hour-weather" id="wind-weather-0">—</span>
@@ -392,8 +429,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <div class="wind-hour-block">
       <span class="wind-hour-label">+1h</span>
       <svg class="wind-hour-arrow" id="wind-arrow-1" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-1">—</span>
       <span class="wind-hour-weather" id="wind-weather-1">—</span>
@@ -402,8 +439,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <div class="wind-hour-block">
       <span class="wind-hour-label">+2h</span>
       <svg class="wind-hour-arrow" id="wind-arrow-2" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-2">—</span>
       <span class="wind-hour-weather" id="wind-weather-2">—</span>
@@ -412,8 +449,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <div class="wind-hour-block">
       <span class="wind-hour-label">+3h</span>
       <svg class="wind-hour-arrow" id="wind-arrow-3" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-3">—</span>
       <span class="wind-hour-weather" id="wind-weather-3">—</span>
@@ -422,8 +459,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <div class="wind-hour-block">
       <span class="wind-hour-label">+4h</span>
       <svg class="wind-hour-arrow" id="wind-arrow-4" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-4">—</span>
       <span class="wind-hour-weather" id="wind-weather-4">—</span>
@@ -432,14 +469,14 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <div class="wind-hour-block">
       <span class="wind-hour-label">+5h</span>
       <svg class="wind-hour-arrow" id="wind-arrow-5" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-5">—</span>
       <span class="wind-hour-weather" id="wind-weather-5">—</span>
     </div>
+    </div>
   </div>
-  <span id="coord-display">Maus über Karte bewegen</span>
 </header>
 
 <!-- REVIER TABS -->
@@ -468,12 +505,11 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   </div>
   <button id="btn-add" onclick="toggleAdd()" style="margin-left:auto;">+ Hochsitz</button>
   <button id="btn-locate" onclick="toggleLocate()">⊙ Standort</button>
-  <button id="btn-overlay" onclick="toggleOverlay()">⊡ Jagdkarte</button>
   <button id="btn-schuss" onclick="toggleSchussrichtungen()">↗ Schussrichtungen</button>
   <button id="btn-wind-match" onclick="toggleWindMatch()">◈ Windmatch</button>
   <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
   <button id="btn-draw" onclick="toggleDraw()">⬡ Reviergrenze</button>
-  <button id="btn-clear-draw" onclick="clearGrenzen()" class="danger">✕ Grenze</button>
+  <button id="btn-aufgaben" onclick="toggleAufgaben()">⚙ Aufgaben</button>
   <button onclick="exportData()">↓ Export</button>
   <button onclick="importData()">↑ Import</button>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(event)">
@@ -493,7 +529,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 <!-- DRAW PANEL -->
 <div id="draw-panel">
   <h3>✏ REVIERGRENZE</h3>
-  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'IBM Plex Mono',monospace;">Linienfarbe:</div>
+  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'JetBrains Mono',monospace;">Farbe:</div>
   <div class="color-row" id="color-swatches">
     <div class="color-swatch selected" style="background:#e63946" data-color="#e63946" onclick="selectColor(this)"></div>
     <div class="color-swatch" style="background:#f4a261" data-color="#f4a261" onclick="selectColor(this)"></div>
@@ -502,11 +538,17 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <div class="color-swatch" style="background:#4895ef" data-color="#4895ef" onclick="selectColor(this)"></div>
     <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectColor(this)"></div>
   </div>
+  <div style="margin:8px 0 4px;font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace;display:flex;justify-content:space-between;">
+    <span>Füllung:</span><span id="fill-opacity-label">0%</span>
+  </div>
+  <input type="range" id="fill-opacity-slider" min="0" max="100" step="5" value="0"
+    oninput="updateFillOpacity(this.value)"
+    style="width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:8px;">
   <div class="btn-row">
     <button onclick="cancelDraw()">Abbrechen</button>
     <button class="save" onclick="finishDraw()">Fertig</button>
   </div>
-  <div class="hint">Klicken = Punkt setzen<br>Doppelklick = Abschließen</div>
+  <div class="hint">Klicken = Punkte setzen<br>Ersten Punkt erneut klicken = Fläche schließen<br>Doppelklick = Offene Linie</div>
 </div>
 
 <!-- ADD HOCHSITZ PANEL -->
@@ -519,6 +561,9 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   </div>
   <div id="add-hint">Klick auf Karte = Position wählen</div>
 </div>
+
+<!-- GRENZE EDIT HINT -->
+<div class="grenze-edit-hint" id="grenze-edit-hint">Punkte verschieben → Fertig klicken</div>
 
 <!-- STATS BAR -->
 <div class="stats-bar">
@@ -646,7 +691,7 @@ async function loadData() {
         }));
         const maxId = hochsitze.length > 0 ? Math.max(...hochsitze.map(h => h.id)) + 1 : 1;
         const nextId = Math.max(rev.next_id || 1, maxId);
-        return { id: rev.id, name: rev.name, nextId, grenzen: rev.grenzen || [], hochsitze };
+        return { id: rev.id, name: rev.name, nextId, grenzen: rev.grenzen || [], aufgaben: rev.aufgaben || [], hochsitze };
       }));
     }
 
@@ -669,11 +714,22 @@ async function loadData() {
 // ── Save revier meta (name, grenzen, next_id) ──
 async function saveRevierMeta(rev) {
   try {
-    await sb.from('reviere').upsert({
-      id: rev.id, name: rev.name, next_id: rev.nextId, grenzen: rev.grenzen || []
-    });
+    const payload = {
+      id: rev.id,
+      name: rev.name,
+      next_id: rev.nextId,
+      grenzen: (rev.grenzen || []).map(g => ({
+        latlngs: g.latlngs,
+        color: g.color || '#e63946',
+        fillOpacity: g.fillOpacity || 0,
+        closed: g.closed || false
+      })),
+      aufgaben: rev.aufgaben || []
+    };
+    const { error } = await sb.from('reviere').upsert(payload);
+    if (error) throw error;
     showSaveStatus(true);
-  } catch(e) { console.error(e); showSaveStatus(false); }
+  } catch(e) { console.error('saveRevierMeta error:', e); showSaveStatus(false); }
 }
 
 // ── Save single Hochsitz ──
@@ -767,6 +823,7 @@ function switchRevier(id) {
   renderRevierBar();
   updateMarkers();
   renderGrenzen();
+  renderAufgaben();
 }
 
 let revDialogMode = 'new', revDialogTargetId = null;
@@ -1090,6 +1147,7 @@ async function saveHS() {
 document.getElementById('new-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveHS(); });
 
 map.on('click', e => {
+  if (aufgabenMode) { addAufgabe(e.latlng); return; }
   if (!addMode) return;
   pendingLL = e.latlng;
   if (tempM) map.removeLayer(tempM);
@@ -1145,22 +1203,33 @@ function doImport(event) {
 const grenzenLayer = L.layerGroup().addTo(map);
 let drawHandler = null;
 let drawColor = '#e63946';
+let drawFillOpacity = 0;
 let drawMode = false;
 
 function selectColor(el) {
   document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
   el.classList.add('selected');
   drawColor = el.dataset.color;
-  if (drawHandler) {
-    drawHandler.disable();
-    startDrawHandler();
-  }
+  if (drawHandler) { drawHandler.disable(); startDrawHandler(); }
+}
+
+function updateFillOpacity(val) {
+  drawFillOpacity = parseInt(val) / 100;
+  document.getElementById('fill-opacity-label').textContent = val + '%';
+  if (drawHandler) { drawHandler.disable(); startDrawHandler(); }
 }
 
 function startDrawHandler() {
-  drawHandler = new L.Draw.Polyline(map, {
-    shapeOptions: { color: drawColor, weight: 2.5, opacity: 0.9, dashArray: null },
-    showLength: false,
+  drawHandler = new L.Draw.Polygon(map, {
+    shapeOptions: {
+      color: drawColor,
+      weight: 2.5,
+      opacity: 0.9,
+      fillColor: drawColor,
+      fillOpacity: drawFillOpacity,
+      dashArray: null
+    },
+    showArea: false,
     metric: true
   });
   drawHandler.enable();
@@ -1188,39 +1257,118 @@ async function cancelDraw() {
 
 async function finishDraw() { cancelDraw(); }
 
-async function clearGrenzen() {
-  if (!confirm('Alle Reviergrenzen des aktiven Reviers löschen?')) return;
-  const rev = getActiveRev();
-  rev.grenzen = [];
-  await saveRevierMeta(rev);
-  renderGrenzen();
-}
+let editingGrenzeIdx = null;
+let editingLayer = null;
 
 async function renderGrenzen() {
   grenzenLayer.clearLayers();
   const rev = getActiveRev();
   if (!rev || !rev.grenzen) return;
-  rev.grenzen.forEach(g => {
-    L.polyline(g.latlngs, {
+  rev.grenzen.forEach((g, idx) => {
+    const opts = {
       color: g.color || '#e63946',
       weight: 2.5,
-      opacity: 0.9
-    }).addTo(grenzenLayer);
+      opacity: 0.9,
+      fillColor: g.color || '#e63946',
+      fillOpacity: g.fillOpacity || 0
+    };
+    const line = g.closed
+      ? L.polygon(g.latlngs, opts)
+      : L.polyline(g.latlngs, opts);
+    line.on('dblclick', function(e) {
+      L.DomEvent.stopPropagation(e);
+      showGrenzePopup(e.latlng, idx, line);
+    });
+    line.addTo(grenzenLayer);
   });
+}
+
+function showGrenzePopup(latlng, idx, layer) {
+  map.closePopup();
+  const popup = L.popup({ className: 'grenze-popup-wrap', closeButton: true, autoClose: true })
+    .setLatLng(latlng)
+    .setContent(`
+      <div class="grenze-popup">
+        <h4>Reviergrenze</h4>
+        <button onclick="startEditGrenze(${idx})">✎ Bearbeiten</button>
+        <button onclick="deleteGrenze(${idx})">✕ Löschen</button>
+      </div>`)
+    .openOn(map);
+}
+
+async function deleteGrenze(idx) {
+  map.closePopup();
+  const rev = getActiveRev();
+  rev.grenzen.splice(idx, 1);
+  await saveRevierMeta(rev);
+  renderGrenzen();
+}
+
+function startEditGrenze(idx) {
+  map.closePopup();
+  const rev = getActiveRev();
+  const g = rev.grenzen[idx];
+  editingGrenzeIdx = idx;
+
+  // Remove existing layers and add editable one
+  grenzenLayer.clearLayers();
+  const editOpts = { color: g.color || '#e63946', weight: 3, opacity: 1, fillColor: g.color || '#e63946', fillOpacity: g.fillOpacity || 0 };
+  editingLayer = g.closed
+    ? L.polygon(g.latlngs, editOpts).addTo(grenzenLayer)
+    : L.polyline(g.latlngs, editOpts).addTo(grenzenLayer);
+
+  // Enable editing
+  editingLayer.editing.enable();
+
+  // Show hint and Fertig button
+  document.getElementById('grenze-edit-hint').style.display = 'block';
+
+  // Add Fertig button dynamically
+  const btn = document.createElement('button');
+  btn.id = 'btn-grenze-fertig';
+  btn.textContent = '✓ Fertig';
+  btn.style.cssText = 'position:fixed;bottom:40px;right:80px;z-index:2000;background:var(--accent);color:#000;border:none;border-radius:4px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;';
+  btn.onclick = finishEditGrenze;
+  document.body.appendChild(btn);
+}
+
+async function finishEditGrenze() {
+  if (editingLayer === null || editingGrenzeIdx === null) return;
+  editingLayer.editing.disable();
+
+  const rev = getActiveRev();
+  rev.grenzen[editingGrenzeIdx].latlngs = editingLayer.getLatLngs().map(ll => [ll.lat, ll.lng]);
+  await saveRevierMeta(rev);
+
+  editingLayer = null;
+  editingGrenzeIdx = null;
+
+  document.getElementById('grenze-edit-hint').style.display = 'none';
+  const btn = document.getElementById('btn-grenze-fertig');
+  if (btn) btn.remove();
+
+  renderGrenzen();
 }
 
 // Listen for drawn shapes
 map.on(L.Draw.Event.CREATED, async function(e) {
-  if (e.layerType === 'polyline') {
+  if (e.layerType === 'polygon' || e.layerType === 'polyline') {
     const rev = getActiveRev();
     if (!rev.grenzen) rev.grenzen = [];
+    const latlngs = e.layer.getLatLngs();
+    // Polygon returns [[ring]], polyline returns [points]
+    let coords = latlngs;
+    if (e.layerType === 'polygon') {
+      coords = latlngs[0]; // first ring
+    }
     rev.grenzen.push({
-      latlngs: e.layer.getLatLngs().map(ll => [ll.lat, ll.lng]),
-      color: drawColor
+      latlngs: coords.map(ll => [ll.lat, ll.lng]),
+      color: drawColor,
+      fillOpacity: drawFillOpacity,
+      closed: e.layerType === 'polygon'
     });
     await saveRevierMeta(rev);
     renderGrenzen();
-    // restart so user can draw another line without toggling
     if (drawMode) startDrawHandler();
   }
 });
@@ -1342,6 +1490,7 @@ function drawSchussrichtungen() {
   if (!rev) return;
   rev.hochsitze.forEach(hs => {
     if (!hs.schussrichtungen || hs.schussrichtungen.length === 0) return;
+    if (!isWindMatch(hs)) return;
     hs.schussrichtungen.forEach(dir => {
       const angleDeg = DIR_ANGLES[dir];
       const angleRad = (angleDeg - 90) * Math.PI / 180;
@@ -1440,33 +1589,6 @@ function stopLocate() {
   }
   locationLayer.clearLayers();
   locationMarker = null;
-}
-
-// ═══════════════════════════════════════════
-//  JAGDKARTE OVERLAY
-// ═══════════════════════════════════════════
-const overlayLayer = L.layerGroup().addTo(map);
-let overlayMode = false;
-let overlayOpacity = 0.7;
-
-// Bounds: [[SW_lat, SW_lng], [NE_lat, NE_lng]]
-const WEST_BOUNDS = [[50.60409, 9.73311], [50.63646, 9.77279]];
-const OST_BOUNDS  = [[50.58975, 9.75364], [50.63831, 9.81318]];
-
-function toggleOverlay() {
-  overlayMode = !overlayMode;
-  document.getElementById('btn-overlay').classList.toggle('active', overlayMode);
-  if (overlayMode) {
-    drawOverlay();
-  } else {
-    overlayLayer.clearLayers();
-  }
-}
-
-function drawOverlay() {
-  overlayLayer.clearLayers();
-  L.imageOverlay('jagdkarte_west.png', WEST_BOUNDS, { opacity: overlayOpacity, interactive: false }).addTo(overlayLayer);
-  L.imageOverlay('jagdkarte_ost.png',  OST_BOUNDS,  { opacity: overlayOpacity, interactive: false }).addTo(overlayLayer);
 }
 
 // ═══════════════════════════════════════════
@@ -1575,6 +1697,75 @@ async function fetchWind() {
 }
 
 // ═══════════════════════════════════════════
+//  SONNENAUF/UNTERGANG
+// ═══════════════════════════════════════════
+async function fetchSun() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=50.6138&longitude=9.7731&daily=sunrise,sunset&timezone=auto&start_date=${today}&end_date=${today}`);
+    const json = await res.json();
+    if (json.daily && json.daily.sunrise && json.daily.sunrise[0]) {
+      document.getElementById('sun-rise').textContent = json.daily.sunrise[0].slice(11,16);
+      document.getElementById('sun-set').textContent  = json.daily.sunset[0].slice(11,16);
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════
+//  AUFGABEN
+// ═══════════════════════════════════════════
+const aufgabenLayer = L.layerGroup().addTo(map);
+let aufgabenMode = false;
+
+function toggleAufgaben() {
+  aufgabenMode = !aufgabenMode;
+  document.getElementById('btn-aufgaben').classList.toggle('active', aufgabenMode);
+  map.getContainer().style.cursor = aufgabenMode ? 'crosshair' : '';
+}
+
+async function addAufgabe(latlng) {
+  const text = prompt('Was muss erledigt werden?');
+  if (!text || !text.trim()) return;
+  const rev = getActiveRev();
+  if (!rev.aufgaben) rev.aufgaben = [];
+  const aufgabe = { id: Date.now(), lat: latlng.lat, lon: latlng.lng, text: text.trim() };
+  rev.aufgaben.push(aufgabe);
+  await saveRevierMeta(rev);
+  renderAufgaben();
+}
+
+async function deleteAufgabe(id) {
+  if (!confirm('Aufgabe als erledigt markieren und löschen?')) return;
+  const rev = getActiveRev();
+  rev.aufgaben = (rev.aufgaben || []).filter(a => a.id !== id);
+  await saveRevierMeta(rev);
+  map.closePopup();
+  renderAufgaben();
+}
+
+function renderAufgaben() {
+  aufgabenLayer.clearLayers();
+  const rev = getActiveRev();
+  if (!rev || !rev.aufgaben) return;
+  rev.aufgaben.forEach(a => {
+    const icon = L.divIcon({
+      html: '<div class="aufgaben-icon">⚙</div>',
+      className: '',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
+    });
+    const marker = L.marker([a.lat, a.lon], { icon });
+    const popup = `<div class="hs-popup">
+      <div class="pname" style="font-size:12px;">⚙ Aufgabe</div>
+      <div style="font-size:12px;padding:6px 0;color:#333;">${a.text}</div>
+      <button class="add-btn" style="background:#e63946;" onclick="deleteAufgabe(${a.id})">✓ Erledigt</button>
+    </div>`;
+    marker.bindPopup(popup);
+    marker.addTo(aufgabenLayer);
+  });
+}
+
+// ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
 (async () => {
@@ -1585,6 +1776,8 @@ async function fetchWind() {
   updateMarkers();
   renderGrenzen();
   fetchWind();
+  fetchSun();
+  renderAufgaben();
 
   // Realtime sync: refresh when another user makes changes
   sb.channel('public:hochsitze')
