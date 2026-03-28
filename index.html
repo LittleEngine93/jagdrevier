@@ -266,11 +266,9 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 /* ── DISTANZ LABEL ── */
 .distanz-label {
-  background: rgba(20,18,16,0.85);
-  border: 1px solid #9b1c1c;
-  border-radius: 3px;
-  color: #e05555;
-  backdrop-filter: blur(4px);
+  background: transparent;
+  border: none;
+  color: #8b0000;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   padding: 1px 5px;
@@ -326,6 +324,27 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   display: flex; align-items: center; justify-content: center;
   font-size: 13px; cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* ── MARKIERUNGEN ── */
+.mbtn { font-size: 11px; padding: 6px 4px; text-align: center; }
+.mbtn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.markierung-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #111; border: 2px solid #444;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.markierung-icon.salzlecke { filter: grayscale(1) brightness(1.8); }
+
+/* ── ZENTRUM ── */
+.zentrum-icon {
+  width: 16px; height: 16px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 /* scrollbar */
@@ -505,11 +524,13 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   </div>
   <button id="btn-add" onclick="toggleAdd()" style="margin-left:auto;">+ Hochsitz</button>
   <button id="btn-locate" onclick="toggleLocate()">⊙ Standort</button>
+  <button id="btn-zentrum" onclick="toggleZentrum()">⊛ Zentrum</button>
   <button id="btn-schuss" onclick="toggleSchussrichtungen()">↗ Schussrichtungen</button>
   <button id="btn-wind-match" onclick="toggleWindMatch()">◈ Windmatch</button>
   <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
   <button id="btn-draw" onclick="toggleDraw()">⬡ Reviergrenze</button>
   <button id="btn-aufgaben" onclick="toggleAufgaben()">⚙ Aufgaben</button>
+  <button id="btn-markierungen" onclick="toggleMarkierungen()">⬡ Markierungen</button>
   <button onclick="exportData()">↓ Export</button>
   <button onclick="importData()">↑ Import</button>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(event)">
@@ -560,6 +581,22 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <button class="save" onclick="saveHS()">Speichern</button>
   </div>
   <div id="add-hint">Klick auf Karte = Position wählen</div>
+</div>
+
+<!-- MARKIERUNGEN PANEL -->
+<div id="markierungen-panel" style="position:fixed;bottom:40px;right:16px;z-index:1200;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:14px;min-width:200px;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.7);">
+  <h3 style="font-size:11px;font-weight:600;margin-bottom:10px;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;">⬡ MARKIERUNG</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+    <button onclick="selectMarkierungTyp('kirrung')" id="mbtn-kirrung" class="mbtn">🌾 Kirrung</button>
+    <button onclick="selectMarkierungTyp('luderplatz')" id="mbtn-luderplatz" class="mbtn">🦴 Luderplatz</button>
+    <button onclick="selectMarkierungTyp('fuchsbau')" id="mbtn-fuchsbau" class="mbtn">🦊 Fuchsbau</button>
+    <button onclick="selectMarkierungTyp('salzlecke')" id="mbtn-salzlecke" class="mbtn">🔷 Salzlecke</button>
+    <button onclick="selectMarkierungTyp('wildkamera')" id="mbtn-wildkamera" class="mbtn" style="grid-column:span 2;">📷 Wildkamera</button>
+  </div>
+  <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;" id="markierungen-hint">Typ wählen → Karte klicken</div>
+  <div class="btn-row" style="margin-top:8px;">
+    <button onclick="cancelMarkierungen()">Abbrechen</button>
+  </div>
 </div>
 
 <!-- GRENZE EDIT HINT -->
@@ -691,7 +728,7 @@ async function loadData() {
         }));
         const maxId = hochsitze.length > 0 ? Math.max(...hochsitze.map(h => h.id)) + 1 : 1;
         const nextId = Math.max(rev.next_id || 1, maxId);
-        return { id: rev.id, name: rev.name, nextId, grenzen: rev.grenzen || [], aufgaben: rev.aufgaben || [], hochsitze };
+        return { id: rev.id, name: rev.name, nextId, grenzen: rev.grenzen || [], aufgaben: rev.aufgaben || [], markierungen: rev.markierungen || [], zentrum: rev.zentrum || null, hochsitze };
       }));
     }
 
@@ -718,6 +755,8 @@ async function saveRevierMeta(rev) {
       id: rev.id,
       name: rev.name,
       next_id: rev.nextId,
+      markierungen: rev.markierungen || [],
+      zentrum: rev.zentrum || null,
       grenzen: (rev.grenzen || []).map(g => ({
         latlngs: g.latlngs,
         color: g.color || '#e63946',
@@ -824,6 +863,9 @@ function switchRevier(id) {
   updateMarkers();
   renderGrenzen();
   renderAufgaben();
+  renderMarkierungen();
+  renderZentrum();
+  flyToZentrum(getActiveRev());
 }
 
 let revDialogMode = 'new', revDialogTargetId = null;
@@ -1147,6 +1189,8 @@ async function saveHS() {
 document.getElementById('new-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveHS(); });
 
 map.on('click', e => {
+  if (zentrumMode) { setZentrum(e.latlng); return; }
+  if (markierungenMode && activeMarkierungTyp) { addMarkierung(e.latlng); return; }
   if (aufgabenMode) { addAufgabe(e.latlng); return; }
   if (!addMode) return;
   pendingLL = e.latlng;
@@ -1766,6 +1810,136 @@ function renderAufgaben() {
 }
 
 // ═══════════════════════════════════════════
+//  REVIER ZENTRUM
+// ═══════════════════════════════════════════
+const zentrumLayer = L.layerGroup().addTo(map);
+let zentrumMode = false;
+
+function toggleZentrum() {
+  zentrumMode = !zentrumMode;
+  document.getElementById('btn-zentrum').classList.toggle('active', zentrumMode);
+  map.getContainer().style.cursor = zentrumMode ? 'crosshair' : '';
+}
+
+async function setZentrum(latlng) {
+  const rev = getActiveRev();
+  rev.zentrum = { lat: latlng.lat, lon: latlng.lng, zoom: map.getZoom() };
+  await saveRevierMeta(rev);
+  zentrumMode = false;
+  document.getElementById('btn-zentrum').classList.remove('active');
+  map.getContainer().style.cursor = '';
+  renderZentrum();
+}
+
+function renderZentrum() {
+  zentrumLayer.clearLayers();
+  const rev = getActiveRev();
+  if (!rev || !rev.zentrum) return;
+  const z = rev.zentrum;
+  const icon = L.divIcon({
+    html: '<div class="zentrum-icon"></div>',
+    className: '',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+  L.marker([z.lat, z.lon], { icon })
+    .bindTooltip('Revier-Zentrum', { permanent: false, direction: 'top' })
+    .addTo(zentrumLayer);
+}
+
+function flyToZentrum(rev) {
+  if (rev && rev.zentrum) {
+    map.setView([rev.zentrum.lat, rev.zentrum.lon], rev.zentrum.zoom || 13);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  MARKIERUNGEN
+// ═══════════════════════════════════════════
+const markierungenLayer = L.layerGroup().addTo(map);
+let markierungenMode = false;
+let activeMarkierungTyp = null;
+
+const MARKIERUNG_TYPES = {
+  kirrung:    { emoji: '🌾', label: 'Kirrung' },
+  luderplatz: { emoji: '🦴', label: 'Luderplatz' },
+  fuchsbau:   { emoji: '🦊', label: 'Fuchsbau' },
+  salzlecke:  { emoji: '🔷', label: 'Salzlecke', silver: true },
+  wildkamera: { emoji: '📷', label: 'Wildkamera' }
+};
+
+function toggleMarkierungen() {
+  markierungenMode = !markierungenMode;
+  document.getElementById('btn-markierungen').classList.toggle('active', markierungenMode);
+  document.getElementById('markierungen-panel').style.display = markierungenMode ? 'block' : 'none';
+  if (!markierungenMode) {
+    activeMarkierungTyp = null;
+    map.getContainer().style.cursor = '';
+    document.querySelectorAll('.mbtn').forEach(b => b.classList.remove('active'));
+  }
+}
+
+function cancelMarkierungen() {
+  markierungenMode = false;
+  activeMarkierungTyp = null;
+  document.getElementById('btn-markierungen').classList.remove('active');
+  document.getElementById('markierungen-panel').style.display = 'none';
+  map.getContainer().style.cursor = '';
+  document.querySelectorAll('.mbtn').forEach(b => b.classList.remove('active'));
+}
+
+function selectMarkierungTyp(typ) {
+  activeMarkierungTyp = typ;
+  document.querySelectorAll('.mbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mbtn-' + typ).classList.add('active');
+  map.getContainer().style.cursor = 'crosshair';
+  document.getElementById('markierungen-hint').textContent = MARKIERUNG_TYPES[typ].label + ' → Karte klicken';
+}
+
+async function addMarkierung(latlng) {
+  if (!activeMarkierungTyp) return;
+  const rev = getActiveRev();
+  if (!rev.markierungen) rev.markierungen = [];
+  const m = { id: Date.now(), typ: activeMarkierungTyp, lat: latlng.lat, lon: latlng.lng };
+  rev.markierungen.push(m);
+  await saveRevierMeta(rev);
+  renderMarkierungen();
+}
+
+async function deleteMarkierung(id) {
+  if (!confirm('Markierung löschen?')) return;
+  const rev = getActiveRev();
+  rev.markierungen = (rev.markierungen || []).filter(m => m.id !== id);
+  await saveRevierMeta(rev);
+  map.closePopup();
+  renderMarkierungen();
+}
+
+function renderMarkierungen() {
+  markierungenLayer.clearLayers();
+  const rev = getActiveRev();
+  if (!rev || !rev.markierungen) return;
+  rev.markierungen.forEach(m => {
+    const t = MARKIERUNG_TYPES[m.typ] || { emoji: '📍', label: m.typ };
+    const silverStyle = t.silver ? 'filter:grayscale(1) brightness(1.8);' : '';
+    const icon = L.divIcon({
+      html: `<div class="markierung-icon" style="${silverStyle}">${t.emoji}</div>`,
+      className: '',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+    const marker = L.marker([m.lat, m.lon], { icon });
+    const popup = `<div class="hs-popup">
+      <div class="pname" style="font-size:12px;">${t.emoji} ${t.label}</div>
+      <div class="row"><span>GPS</span><span style="font-size:10px">${m.lat.toFixed(5)}, ${m.lon.toFixed(5)}</span></div>
+      <button class="del-hs-btn" onclick="deleteMarkierung(${m.id})">Löschen</button>
+    </div>`;
+    marker.bindPopup(popup);
+    marker.addTo(markierungenLayer);
+  });
+}
+
+// ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
 (async () => {
@@ -1778,6 +1952,9 @@ function renderAufgaben() {
   fetchWind();
   fetchSun();
   renderAufgaben();
+  renderMarkierungen();
+  renderZentrum();
+  flyToZentrum(getActiveRev());
 
   // Realtime sync: refresh when another user makes changes
   sb.channel('public:hochsitze')
