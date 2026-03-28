@@ -1824,7 +1824,11 @@ function toggleZentrum() {
 
 async function setZentrum(latlng) {
   const rev = getActiveRev();
-  rev.zentrum = { lat: latlng.lat, lon: latlng.lng, zoom: map.getZoom() };
+  const zentrum = { lat: latlng.lat, lon: latlng.lng, zoom: map.getZoom() };
+  rev.zentrum = zentrum;
+  // Also update in data.reviere directly to ensure persistence
+  const revInData = data.reviere.find(r => r.id === rev.id);
+  if (revInData) revInData.zentrum = zentrum;
   await saveRevierMeta(rev);
   zentrumMode = false;
   document.getElementById('btn-zentrum').classList.remove('active');
