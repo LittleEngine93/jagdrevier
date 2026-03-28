@@ -530,6 +530,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   <button id="btn-wind-match" onclick="toggleWindMatch()">◈ Windmatch</button>
   <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
   <button id="btn-draw" onclick="toggleDraw()">⬡ Reviergrenze</button>
+  <button id="btn-pirsch" onclick="togglePirsch()">⟿ Pirschweg</button>
+  <button id="btn-pirsch" onclick="togglePirsch()">⟿ Pirschweg</button>
   <button id="btn-aufgaben" onclick="toggleAufgaben()">⚙ Aufgaben</button>
   <button id="btn-markierungen" onclick="toggleMarkierungen()">⬡ Markierungen</button>
   <button onclick="exportData()">↓ Export</button>
@@ -571,6 +573,44 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <button class="save" onclick="finishDraw()">Fertig</button>
   </div>
   <div class="hint">Klicken = Punkte setzen<br>Ersten Punkt erneut klicken = Fläche schließen<br>Doppelklick = Offene Linie</div>
+</div>
+
+<!-- PIRSCHWEG PANEL -->
+<div id="pirsch-panel" style="position:fixed;bottom:40px;right:16px;z-index:1200;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:14px;min-width:230px;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.7);">
+  <h3 style="font-size:11px;font-weight:600;margin-bottom:10px;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;">⟿ PIRSCHWEG</h3>
+  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'JetBrains Mono',monospace;">Farbe:</div>
+  <div class="color-row" id="pirsch-color-swatches">
+    <div class="color-swatch selected" style="background:#f97316" data-color="#f97316" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#52b788" data-color="#52b788" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#4895ef" data-color="#4895ef" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#e63946" data-color="#e63946" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#f5c518" data-color="#f5c518" onclick="selectPirschColor(this)"></div>
+  </div>
+  <div class="btn-row" style="margin-top:10px;">
+    <button onclick="cancelPirsch()">Abbrechen</button>
+    <button class="save" onclick="finishPirsch()">Fertig</button>
+  </div>
+  <div class="hint" style="margin-top:8px;">Klicken = Punkt setzen<br>Doppelklick = Abschließen</div>
+</div>
+
+<!-- PIRSCHWEG PANEL -->
+<div id="pirsch-panel" style="position:fixed;bottom:40px;right:16px;z-index:1200;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:14px;min-width:230px;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.7);">
+  <h3 style="font-size:11px;font-weight:600;margin-bottom:10px;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;">⟿ PIRSCHWEG</h3>
+  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'JetBrains Mono',monospace;">Farbe:</div>
+  <div class="color-row" id="pirsch-color-swatches">
+    <div class="color-swatch selected" style="background:#f97316" data-color="#f97316" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#52b788" data-color="#52b788" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#4895ef" data-color="#4895ef" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#f5c518" data-color="#f5c518" onclick="selectPirschColor(this)"></div>
+    <div class="color-swatch" style="background:#e63946" data-color="#e63946" onclick="selectPirschColor(this)"></div>
+  </div>
+  <div class="btn-row" style="margin-top:10px;">
+    <button onclick="cancelPirsch()">Abbrechen</button>
+    <button class="save" onclick="finishPirsch()">Fertig</button>
+  </div>
+  <div style="font-size:10px;color:var(--text3);margin-top:6px;font-family:'JetBrains Mono',monospace;">Klicken = Punkt · Doppelklick = Ende</div>
 </div>
 
 <!-- ADD HOCHSITZ PANEL -->
@@ -729,7 +769,7 @@ async function loadData() {
         }));
         const maxId = hochsitze.length > 0 ? Math.max(...hochsitze.map(h => h.id)) + 1 : 1;
         const nextId = Math.max(rev.next_id || 1, maxId);
-        return { id: rev.id, name: rev.name, nextId, grenzen: rev.grenzen || [], aufgaben: rev.aufgaben || [], markierungen: rev.markierungen || [], zentrum: rev.zentrum || null, hochsitze };
+        return { id: rev.id, name: rev.name, nextId, grenzen: rev.grenzen || [], aufgaben: rev.aufgaben || [], markierungen: rev.markierungen || [], pirschwege: rev.pirschwege || [], zentrum: rev.zentrum || null, hochsitze };
       }));
     }
 
@@ -757,6 +797,7 @@ async function saveRevierMeta(rev) {
       name: rev.name,
       next_id: rev.nextId,
       markierungen: rev.markierungen || [],
+      pirschwege: rev.pirschwege || [],
       zentrum: rev.zentrum || null,
       grenzen: (rev.grenzen || []).map(g => ({
         latlngs: g.latlngs,
@@ -865,6 +906,7 @@ function switchRevier(id) {
   renderGrenzen();
   renderAufgaben();
   renderMarkierungen();
+  renderPirschwege();
   renderZentrum();
   flyToZentrum(getActiveRev());
 }
@@ -1397,6 +1439,19 @@ async function finishEditGrenze() {
 
 // Listen for drawn shapes
 map.on(L.Draw.Event.CREATED, async function(e) {
+  // Pirschweg handler
+  if (pirschMode && e.layerType === 'polyline') {
+    const rev = getActiveRev();
+    if (!rev.pirschwege) rev.pirschwege = [];
+    rev.pirschwege.push({
+      latlngs: e.layer.getLatLngs().map(ll => [ll.lat, ll.lng]),
+      color: pirschColor
+    });
+    await saveRevierMeta(rev);
+    renderPirschwege();
+    if (pirschMode) startPirschHandler();
+    return;
+  }
   if (e.layerType === 'polygon' || e.layerType === 'polyline') {
     const rev = getActiveRev();
     if (!rev.grenzen) rev.grenzen = [];
@@ -1811,6 +1866,121 @@ function renderAufgaben() {
 }
 
 // ═══════════════════════════════════════════
+//  PIRSCHWEG
+// ═══════════════════════════════════════════
+const pirschLayer = L.layerGroup().addTo(map);
+let pirschMode = false;
+let pirschHandler = null;
+let pirschColor = '#f97316';
+
+function selectPirschColor(el) {
+  document.querySelectorAll('#pirsch-color-swatches .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  pirschColor = el.dataset.color;
+  if (pirschHandler) { pirschHandler.disable(); startPirschHandler(); }
+}
+
+function startPirschHandler() {
+  pirschHandler = new L.Draw.Polyline(map, {
+    shapeOptions: { color: pirschColor, weight: 2.5, opacity: 0.9, dashArray: '8,5' },
+    showLength: false,
+    metric: true
+  });
+  pirschHandler.enable();
+}
+
+function togglePirsch() {
+  pirschMode = !pirschMode;
+  document.getElementById('btn-pirsch').classList.toggle('active', pirschMode);
+  document.getElementById('pirsch-panel').style.display = pirschMode ? 'block' : 'none';
+  if (pirschMode) {
+    cancelAdd(); cancelDraw();
+    startPirschHandler();
+  } else {
+    if (pirschHandler) { pirschHandler.disable(); pirschHandler = null; }
+  }
+}
+
+function cancelPirsch() {
+  pirschMode = false;
+  document.getElementById('btn-pirsch').classList.remove('active');
+  document.getElementById('pirsch-panel').style.display = 'none';
+  if (pirschHandler) { pirschHandler.disable(); pirschHandler = null; }
+}
+
+function finishPirsch() { cancelPirsch(); }
+
+async function renderPirschwege() {
+  pirschLayer.clearLayers();
+  const rev = getActiveRev();
+  if (!rev || !rev.pirschwege) return;
+  rev.pirschwege.forEach((p, idx) => {
+    const line = L.polyline(p.latlngs, {
+      color: p.color || '#f97316',
+      weight: 2.5,
+      opacity: 0.9,
+      dashArray: '8,5'
+    });
+    line.on('dblclick', function(e) {
+      L.DomEvent.stopPropagation(e);
+      map.closePopup();
+      L.popup()
+        .setLatLng(e.latlng)
+        .setContent(`<div class="hs-popup">
+          <div class="pname" style="font-size:12px;">⟿ Pirschweg</div>
+          <button class="del-hs-btn" onclick="deletePirschweg(${idx})">Löschen</button>
+        </div>`)
+        .openOn(map);
+    });
+    line.addTo(pirschLayer);
+  });
+}
+
+async function deletePirschweg(idx) {
+  map.closePopup();
+  const rev = getActiveRev();
+  rev.pirschwege.splice(idx, 1);
+  await saveRevierMeta(rev);
+  renderPirschwege();
+}
+
+// ═══════════════════════════════════════════
+//  PIRSCHWEG
+// ═══════════════════════════════════════════
+async function renderPirschWege() {
+  pirschLayer.clearLayers();
+  const rev = getActiveRev();
+  if (!rev || !rev.pirschWege) return;
+  rev.pirschWege.forEach((p, idx) => {
+    const line = L.polyline(p.latlngs, {
+      color: p.color || '#f97316',
+      weight: 3,
+      opacity: 0.9,
+      dashArray: '8,5'
+    });
+    line.on('dblclick', function(e) {
+      L.DomEvent.stopPropagation(e);
+      const popup = L.popup({ closeButton: true })
+        .setLatLng(e.latlng)
+        .setContent(`<div class="hs-popup">
+          <div class="pname" style="font-size:12px;">⟿ Pirschweg</div>
+          <button class="del-hs-btn" onclick="deletePirschweg(${idx})">Löschen</button>
+        </div>`)
+        .openOn(map);
+    });
+    line.addTo(pirschLayer);
+  });
+}
+
+async function deletePirschweg(idx) {
+  map.closePopup();
+  const rev = getActiveRev();
+  rev.pirschWege.splice(idx, 1);
+  await saveRevierMeta(rev);
+  renderPirschWege();
+}
+
+// ═══════════════════════════════════════════
 //  REVIER ZENTRUM
 // ═══════════════════════════════════════════
 const zentrumLayer = L.layerGroup().addTo(map);
@@ -1958,6 +2128,7 @@ function renderMarkierungen() {
   fetchSun();
   renderAufgaben();
   renderMarkierungen();
+  renderPirschwege();
   renderZentrum();
   flyToZentrum(getActiveRev());
 
