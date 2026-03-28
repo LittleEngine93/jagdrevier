@@ -531,7 +531,6 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
   <button id="btn-draw" onclick="toggleDraw()">⬡ Reviergrenze</button>
   <button id="btn-pirsch" onclick="togglePirsch()">⟿ Pirschweg</button>
-  <button id="btn-pirsch" onclick="togglePirsch()">⟿ Pirschweg</button>
   <button id="btn-aufgaben" onclick="toggleAufgaben()">⚙ Aufgaben</button>
   <button id="btn-markierungen" onclick="toggleMarkierungen()">⬡ Markierungen</button>
   <button onclick="exportData()">↓ Export</button>
@@ -1950,8 +1949,8 @@ async function deletePirschweg(idx) {
 async function renderPirschWege() {
   pirschLayer.clearLayers();
   const rev = getActiveRev();
-  if (!rev || !rev.pirschWege) return;
-  rev.pirschWege.forEach((p, idx) => {
+  if (!rev || !rev.pirschwege) return;
+  rev.pirschwege.forEach((p, idx) => {
     const line = L.polyline(p.latlngs, {
       color: p.color || '#f97316',
       weight: 3,
@@ -1975,7 +1974,7 @@ async function renderPirschWege() {
 async function deletePirschweg(idx) {
   map.closePopup();
   const rev = getActiveRev();
-  rev.pirschWege.splice(idx, 1);
+  rev.pirschwege.splice(idx, 1);
   await saveRevierMeta(rev);
   renderPirschWege();
 }
