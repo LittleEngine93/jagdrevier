@@ -468,6 +468,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   </div>
   <button id="btn-add" onclick="toggleAdd()" style="margin-left:auto;">+ Hochsitz</button>
   <button id="btn-locate" onclick="toggleLocate()">⊙ Standort</button>
+  <button id="btn-overlay" onclick="toggleOverlay()">⊡ Jagdkarte</button>
   <button id="btn-schuss" onclick="toggleSchussrichtungen()">↗ Schussrichtungen</button>
   <button id="btn-wind-match" onclick="toggleWindMatch()">◈ Windmatch</button>
   <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
@@ -1442,6 +1443,33 @@ function stopLocate() {
 }
 
 // ═══════════════════════════════════════════
+//  JAGDKARTE OVERLAY
+// ═══════════════════════════════════════════
+const overlayLayer = L.layerGroup().addTo(map);
+let overlayMode = false;
+let overlayOpacity = 0.7;
+
+// Bounds: [[SW_lat, SW_lng], [NE_lat, NE_lng]]
+const WEST_BOUNDS = [[50.60409, 9.73311], [50.63646, 9.77279]];
+const OST_BOUNDS  = [[50.58975, 9.75364], [50.63831, 9.81318]];
+
+function toggleOverlay() {
+  overlayMode = !overlayMode;
+  document.getElementById('btn-overlay').classList.toggle('active', overlayMode);
+  if (overlayMode) {
+    drawOverlay();
+  } else {
+    overlayLayer.clearLayers();
+  }
+}
+
+function drawOverlay() {
+  overlayLayer.clearLayers();
+  L.imageOverlay('jagdkarte_west.png', WEST_BOUNDS, { opacity: overlayOpacity, interactive: false }).addTo(overlayLayer);
+  L.imageOverlay('jagdkarte_ost.png',  OST_BOUNDS,  { opacity: overlayOpacity, interactive: false }).addTo(overlayLayer);
+}
+
+// ═══════════════════════════════════════════
 //  WIND-MATCH
 // ═══════════════════════════════════════════
 let windMatchMode = false;
@@ -1476,6 +1504,11 @@ function isWindMatch(hs) {
 //  GPS STANDORT
 // ═══════════════════════════════════════════
 
+
+
+// ═══════════════════════════════════════════
+//  JAGDKARTE OVERLAY
+// ═══════════════════════════════════════════
 
 
 // ═══════════════════════════════════════════
