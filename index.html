@@ -291,6 +291,15 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 .kompass-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
 .kompass-btn.center { background: transparent; border: none; cursor: default; }
 
+/* ── LOCATION ── */
+.location-dot {
+  width: 18px; height: 18px;
+  background: #4895ef;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(72,149,239,0.35);
+}
+
 /* scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -458,6 +467,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     </select>
   </div>
   <button id="btn-add" onclick="toggleAdd()" style="margin-left:auto;">+ Hochsitz</button>
+  <button id="btn-locate" onclick="toggleLocate()">⊙ Standort</button>
   <button id="btn-schuss" onclick="toggleSchussrichtungen()">↗ Schussrichtungen</button>
   <button id="btn-wind-match" onclick="toggleWindMatch()">◈ Windmatch</button>
   <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
@@ -1360,6 +1370,78 @@ function drawSchussrichtungen() {
 }
 
 // ═══════════════════════════════════════════
+//  GPS STANDORT
+// ═══════════════════════════════════════════
+const locationLayer = L.layerGroup().addTo(map);
+let locateMode = false;
+let locateWatchId = null;
+let locationMarker = null;
+
+function toggleLocate() {
+  locateMode = !locateMode;
+  document.getElementById('btn-locate').classList.toggle('active', locateMode);
+  if (locateMode) {
+    startLocate();
+  } else {
+    stopLocate();
+  }
+}
+
+function startLocate() {
+  if (!navigator.geolocation) {
+    alert('GPS wird auf diesem Gerät nicht unterstützt.');
+    locateMode = false;
+    document.getElementById('btn-locate').classList.remove('active');
+    return;
+  }
+  locateWatchId = navigator.geolocation.watchPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      locationLayer.clearLayers();
+      // Accuracy circle
+      if (pos.coords.accuracy) {
+        L.circle([lat, lng], {
+          radius: pos.coords.accuracy,
+          color: '#4895ef',
+          weight: 1,
+          opacity: 0.4,
+          fillColor: '#4895ef',
+          fillOpacity: 0.08
+        }).addTo(locationLayer);
+      }
+      // Position dot
+      const icon = L.divIcon({
+        html: '<div class="location-dot"></div>',
+        className: '',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+      });
+      locationMarker = L.marker([lat, lng], { icon }).addTo(locationLayer);
+      // Center map on first fix
+      if (!locationMarker._centered) {
+        map.setView([lat, lng], Math.max(map.getZoom(), 15));
+        locationMarker._centered = true;
+      }
+    },
+    err => {
+      console.warn('GPS Fehler:', err.message);
+      if (err.code === 1) alert('Bitte GPS-Zugriff erlauben.');
+    },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+  );
+}
+
+function stopLocate() {
+  if (locateWatchId !== null) {
+    navigator.geolocation.clearWatch(locateWatchId);
+    locateWatchId = null;
+  }
+  locationLayer.clearLayers();
+  locationMarker = null;
+}
+
+// ═══════════════════════════════════════════
 //  WIND-MATCH
 // ═══════════════════════════════════════════
 let windMatchMode = false;
@@ -1389,6 +1471,12 @@ function isWindMatch(hs) {
   const validDirs = DIR_NEIGHBORS[currentWindCompass] || [currentWindCompass];
   return hs.schussrichtungen.some(dir => validDirs.includes(dir));
 }
+
+// ═══════════════════════════════════════════
+//  GPS STANDORT
+// ═══════════════════════════════════════════
+
+
 
 // ═══════════════════════════════════════════
 //  WIND
