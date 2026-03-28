@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Jagdrevier Manager</title>
+<title>Unser Heimatrevier</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Jagdrevier">
+<meta name="apple-mobile-web-app-title" content="Heimatrevier">
 <meta name="theme-color" content="#0a0a0a">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -16,7 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Using system fonts - San Francisco on Apple, Segoe UI on Windows */
 
 :root {
   --bg:      #0a0a0a;
@@ -35,27 +35,31 @@
 
 html { height: 100%; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100%; min-height: 100vh; overflow: hidden; position: relative; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100%; min-height: 100vh; overflow: hidden; position: relative; }
 
 /* ── HEADER ── */
 header {
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.06);
   padding: 8px 20px;
   display: flex; align-items: center; justify-content: space-between;
-  height: 110px;
-  position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
+  height: 80px;
+  position: fixed; top: 12px; left: 12px; right: 12px; z-index: 1100;
+  border-radius: 10px;
 }
 .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; overflow: visible; flex-wrap: nowrap; }
-.logo { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
-.logo span { color: var(--text3); font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 400; margin-left: 8px; text-transform: none; letter-spacing: 0; }
-.header-sep { width: 1px; height: 24px; background: var(--border2); flex-shrink: 0; }
-#coord-display { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
-#sun-indicator { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); flex-shrink: 0; white-space: nowrap; }
+.header-right { display: flex; align-items: center; gap: 20px; margin-left: auto; overflow: visible; flex-wrap: nowrap; }
+.logo { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; font-size: 20px; font-weight: 600; color: var(--accent); letter-spacing: 0.04em; text-transform: none; }
+.logo span { color: var(--text3); font-size: 11px; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; font-weight: 400; margin-left: 8px; text-transform: none; letter-spacing: 0; }
+.header-sep { width: 1px; height: 24px; background: var(--border2); flex-shrink: 0; margin: 0 4px; }
+#coord-display { font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; font-size: 20px; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+#sun-indicator { display: flex; align-items: center; gap: 5px; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; font-size: 20px; color: var(--accent); flex-shrink: 0; white-space: nowrap; }
 .sun-sep { color: var(--border2); }
-#wind-indicator { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); }
+#wind-indicator { display: flex; align-items: center; gap: 8px; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; font-size: 10px; color: var(--accent); }
 .wind-hour-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.weather-hour-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .wind-hour-label { font-size: 8px; color: var(--accent); letter-spacing: 0.06em; line-height: 1; }
 .wind-hour-arrow { flex-shrink: 0; }
 .wind-hour-info { font-size: 9px; color: var(--accent); white-space: nowrap; }
@@ -63,16 +67,9 @@ header {
 .wind-hour-sep { width: 1px; height: 28px; background: var(--border2); }
 
 /* ── REVIER BAR ── */
-#revier-bar {
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  padding: 0 20px;
-  display: flex; align-items: center; gap: 4px;
-  height: 44px; overflow-x: auto;
-  position: fixed; top: 110px; left: 0; right: 0; z-index: 1100;
-}
+#revier-bar { display: none; }
 .rev-tab {
-  font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 500;
+  font-size: 11px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; font-weight: 500;
   background: transparent; color: var(--text3);
   border: none; border-bottom: 2px solid transparent;
   padding: 0 12px; height: 44px; cursor: pointer; white-space: nowrap;
@@ -94,24 +91,36 @@ header {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255,255,255,0.06);
-  padding: 6px 20px;
-  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
-  position: fixed; top: 154px; left: 0; right: 0; z-index: 1100;
+  padding: 10px 16px;
+  display: flex; gap: 6px; align-items: center; flex-wrap: nowrap;
+  border-radius: 10px;
+  flex-shrink: 0;
 }
-.ctrl-group { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #000000; }
+#controls2 {
+  background: rgba(10,10,10,0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 16px;
+  display: flex; gap: 6px; align-items: center; flex-wrap: nowrap;
+  border-radius: 10px;
+  overflow-x: auto;
+  flex: 1;
+}
+.ctrl-group { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #c45d0a; font-weight: 600; }
 .ctrl-sep { width: 1px; height: 16px; background: var(--border2); margin: 0 2px; }
 select {
   background: var(--bg3); color: var(--text);
   border: 1px solid var(--border2); border-radius: 4px;
-  padding: 4px 8px; font-size: 11px; font-family: 'Inter', sans-serif;
+  padding: 4px 8px; font-size: 11px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
   outline: none;
 }
 select:focus { border-color: var(--accent); }
 button {
-  background: var(--bg3); color: var(--text2);
-  border: 1px solid var(--border2); border-radius: 4px;
+  background: var(--bg3); color: #ffffff;
+  border: 1px solid var(--border2); border-radius: 12px;
   padding: 4px 10px; font-size: 11px; cursor: pointer;
-  font-family: 'Inter', sans-serif; font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; font-weight: 500;
   transition: all 0.12s;
   display: flex; align-items: center; gap: 4px;
 }
@@ -131,7 +140,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   border-radius: 4px; padding: 7px 9px; font-size: 10px; color: var(--text2);
   backdrop-filter: blur(4px);
 }
-.legend-title { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--text3); margin-bottom: 4px; letter-spacing: 0.1em; text-transform: uppercase; }
+.legend-title { font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; font-size: 8px; color: var(--text3); margin-bottom: 4px; letter-spacing: 0.1em; text-transform: uppercase; }
 .legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
 .legend-row:last-child { margin-bottom: 0; }
 .ldot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
@@ -143,7 +152,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255,255,255,0.06);
   padding: 0 20px; display: flex; gap: 0; font-size: 10px;
-  color: var(--text3); font-family: 'JetBrains Mono', monospace;
+  color: var(--text3); font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace;
   height: 32px; align-items: center;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 1100;
 }
@@ -159,19 +168,19 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   border-radius: 6px; padding: 14px; min-width: 230px; display: none;
   box-shadow: 0 8px 32px rgba(0,0,0,0.8);
 }
-#add-panel h3 { font-size: 11px; font-weight: 600; margin-bottom: 10px; color: var(--accent); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+#add-panel h3 { font-size: 11px; font-weight: 600; margin-bottom: 10px; color: var(--accent); font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
 #add-panel input {
   width: 100%; background: var(--bg); color: var(--text);
   border: 1px solid var(--border2); border-radius: 4px;
   padding: 6px 8px; font-size: 12px; margin-bottom: 8px;
-  font-family: 'JetBrains Mono', monospace; outline: none;
+  font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; outline: none;
 }
 #add-panel input:focus { border-color: var(--accent); }
 #add-panel .btn-row { display: flex; gap: 6px; }
 #add-panel .btn-row button { flex: 1; padding: 5px; }
 #add-panel .btn-row .save { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
 #add-panel .btn-row .save:hover { background: var(--accent2); }
-#add-hint { font-size: 10px; color: var(--text3); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+#add-hint { font-size: 10px; color: var(--text3); margin-top: 6px; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; }
 
 /* ── MODAL OVERLAY ── */
 #modal-overlay {
@@ -186,13 +195,13 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   max-height: 85vh; overflow-y: auto;
   box-shadow: 0 16px 64px rgba(0,0,0,0.9);
 }
-#modal-box h2 { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.06em; }
+#modal-box h2 { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.06em; }
 .form-row { margin-bottom: 10px; }
-.form-row label { display: block; font-size: 10px; color: var(--text3); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.form-row label { display: block; font-size: 10px; color: var(--text3); margin-bottom: 4px; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
 .form-row input, .form-row select, .form-row textarea {
   width: 100%; background: var(--bg); color: var(--text);
   border: 1px solid var(--border2); border-radius: 4px;
-  padding: 7px 9px; font-size: 12px; font-family: 'Inter', sans-serif; outline: none;
+  padding: 7px 9px; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; outline: none;
 }
 .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: var(--accent); }
 .form-row textarea { resize: vertical; min-height: 60px; }
@@ -213,7 +222,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 /* ── ABSCHUSS LIST IN POPUP ── */
 .hs-popup { font-size: 12px; min-width: 190px; max-width: 260px; }
-.hs-popup .pname { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #111; text-transform: uppercase; letter-spacing: 0.04em; }
+.hs-popup .pname { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #111; text-transform: uppercase; letter-spacing: 0.04em; }
 .hs-popup .row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-bottom: 1px solid #00000015; font-size: 11px; }
 .hs-popup .row span:first-child { color: #888; }
 .hs-popup .ab-list { margin-top: 6px; max-height: 110px; overflow-y: auto; }
@@ -242,11 +251,11 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   border-radius: 8px; padding: 20px; width: 300px;
   box-shadow: 0 16px 48px rgba(0,0,0,0.9);
 }
-#rev-dialog-box h3 { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+#rev-dialog-box h3 { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
 #rev-dialog-box input {
   width: 100%; background: var(--bg); color: var(--text);
   border: 1px solid var(--border2); border-radius: 4px;
-  padding: 7px 9px; font-size: 13px; font-family: 'JetBrains Mono', monospace;
+  padding: 7px 9px; font-size: 13px; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace;
   margin-bottom: 10px; outline: none;
 }
 #rev-dialog-box input:focus { border-color: var(--accent); }
@@ -258,8 +267,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   border-radius: 6px; padding: 14px; min-width: 230px; display: none;
   box-shadow: 0 6px 30px rgba(0,0,0,0.7);
 }
-#draw-panel h3 { font-size: 11px; font-weight: 600; margin-bottom: 10px; color: var(--accent); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
-#draw-panel .hint { font-size: 10px; color: var(--text3); margin-top: 8px; font-family: 'JetBrains Mono', monospace; line-height: 1.6; }
+#draw-panel h3 { font-size: 11px; font-weight: 600; margin-bottom: 10px; color: var(--accent); font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+#draw-panel .hint { font-size: 10px; color: var(--text3); margin-top: 8px; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; line-height: 1.6; }
 .color-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
 .color-swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
 .color-swatch.selected { border-color: #fff; }
@@ -269,7 +278,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   background: transparent;
   border: none;
   color: #8b0000;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace;
   font-size: 10px;
   padding: 1px 5px;
   box-shadow: none;
@@ -286,7 +295,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   background: var(--bg3); border: 1px solid var(--border2);
   border-radius: 3px; color: var(--text2); font-size: 10px;
   padding: 4px 2px; text-align: center; cursor: pointer;
-  font-family: 'JetBrains Mono', monospace; transition: all 0.12s;
+  font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; transition: all 0.12s;
 }
 .kompass-btn:hover { border-color: var(--accent); color: var(--accent); }
 .kompass-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
@@ -306,14 +315,14 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   background: var(--bg2); border: 1px solid var(--border2);
   border-radius: 6px; padding: 12px; min-width: 200px;
   box-shadow: 0 6px 24px rgba(0,0,0,0.7);
-  font-family: 'Inter', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
 }
 .grenze-popup h4 { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
-.grenze-popup button { display: block; width: 100%; padding: 7px 10px; margin-bottom: 6px; background: var(--bg3); color: var(--text); border: 1px solid var(--border2); border-radius: 4px; font-size: 11px; cursor: pointer; text-align: left; font-family: 'Inter', sans-serif; transition: all 0.12s; }
+.grenze-popup button { display: block; width: 100%; padding: 7px 10px; margin-bottom: 6px; background: var(--bg3); color: var(--text); border: 1px solid var(--border2); border-radius: 4px; font-size: 11px; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; transition: all 0.12s; }
 .grenze-popup button:hover { background: var(--border2); }
 .grenze-popup button:last-child { margin-bottom: 0; color: var(--red); border-color: #3a1515; }
 .grenze-popup button:last-child:hover { background: #1a0808; }
-.grenze-edit-hint { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2000; background: rgba(10,10,10,0.9); border: 1px solid var(--accent); border-radius: 4px; padding: 6px 14px; font-size: 11px; color: var(--accent); font-family: 'JetBrains Mono', monospace; display: none; }
+.grenze-edit-hint { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2000; background: rgba(10,10,10,0.9); border: 1px solid var(--accent); border-radius: 4px; padding: 6px 14px; font-size: 11px; color: var(--accent); font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; display: none; }
 
 /* ── AUFGABEN ── */
 .aufgaben-icon {
@@ -349,9 +358,9 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 /* ── JAGDZEITEN ── */
 .jz-row { margin-bottom: 10px; }
-.jz-art { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.jz-art { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .jz-months { display: flex; gap: 2px; }
-.jz-month { width: 22px; height: 22px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-family: 'JetBrains Mono', monospace; background: var(--bg3); color: var(--text3); flex-shrink: 0; }
+.jz-month { width: 22px; height: 22px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; background: var(--bg3); color: var(--text3); flex-shrink: 0; }
 .jz-month.open { background: #1b4332; color: #52b788; font-weight: 600; }
 .jz-month.current-open { background: #52b788; color: #0a0a0a; font-weight: 700; }
 .jz-month.current-closed { background: var(--bg3); color: var(--text3); outline: 1px solid var(--accent); }
@@ -362,7 +371,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-.leaflet-top { top: 198px !important; }
+.leaflet-top { top: 184px !important; }
 .leaflet-control-zoom { margin-top: 0 !important; }
 
 /* ── PORTRAIT MOBILE ── */
@@ -433,7 +442,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 <header>
   <div class="header-left">
-    <div class="logo">⊕ Jagdrevier<span id="revier-title">—</span></div>
+    <div class="logo">Unser Heimatrevier</div>
   </div>
   <div class="header-right">
     <span id="coord-display">Maus über Karte bewegen</span>
@@ -444,87 +453,100 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
       <span title="Sonnenuntergang">● <span id="sun-set">—</span></span>
     </div>
     <div class="header-sep"></div>
-    <div id="wind-indicator">
+    <div style="display:flex;align-items:flex-start;gap:20px;">
+    <div id="wind-indicator" style="display:flex;align-items:flex-start;gap:6px;">
     <div class="wind-hour-block">
       <span class="wind-hour-label">Jetzt</span>
-      <svg class="wind-hour-arrow" id="wind-arrow-0" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <svg class="wind-hour-arrow" id="wind-arrow-0" width="32" height="32" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-0">—</span>
-      <span class="wind-hour-weather" id="wind-weather-0">—</span>
     </div>
     <div class="wind-hour-sep"></div>
     <div class="wind-hour-block">
       <span class="wind-hour-label">+1h</span>
-      <svg class="wind-hour-arrow" id="wind-arrow-1" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <svg class="wind-hour-arrow" id="wind-arrow-1" width="32" height="32" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-1">—</span>
-      <span class="wind-hour-weather" id="wind-weather-1">—</span>
     </div>
     <div class="wind-hour-sep"></div>
     <div class="wind-hour-block">
       <span class="wind-hour-label">+2h</span>
-      <svg class="wind-hour-arrow" id="wind-arrow-2" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <svg class="wind-hour-arrow" id="wind-arrow-2" width="32" height="32" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-2">—</span>
-      <span class="wind-hour-weather" id="wind-weather-2">—</span>
     </div>
     <div class="wind-hour-sep"></div>
     <div class="wind-hour-block">
       <span class="wind-hour-label">+3h</span>
-      <svg class="wind-hour-arrow" id="wind-arrow-3" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <svg class="wind-hour-arrow" id="wind-arrow-3" width="32" height="32" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-3">—</span>
-      <span class="wind-hour-weather" id="wind-weather-3">—</span>
     </div>
     <div class="wind-hour-sep"></div>
     <div class="wind-hour-block">
       <span class="wind-hour-label">+4h</span>
-      <svg class="wind-hour-arrow" id="wind-arrow-4" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <svg class="wind-hour-arrow" id="wind-arrow-4" width="32" height="32" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-4">—</span>
-      <span class="wind-hour-weather" id="wind-weather-4">—</span>
     </div>
     <div class="wind-hour-sep"></div>
     <div class="wind-hour-block">
       <span class="wind-hour-label">+5h</span>
-      <svg class="wind-hour-arrow" id="wind-arrow-5" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <svg class="wind-hour-arrow" id="wind-arrow-5" width="32" height="32" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <span class="wind-hour-info" id="wind-label-5">—</span>
-      <span class="wind-hour-weather" id="wind-weather-5">—</span>
+    </div>
+    </div>
+    <div class="header-sep"></div>
+    <div id="weather-indicator" style="display:flex;align-items:flex-start;gap:6px;">
+      <div class="wind-hour-block"><span class="wind-hour-label">Jetzt</span><span id="wx-0" style="display:flex;align-items:center;">—</span></div>
+      <div class="wind-hour-sep"></div>
+      <div class="wind-hour-block"><span class="wind-hour-label">+1h</span><span id="wx-1" style="display:flex;align-items:center;">—</span></div>
+      <div class="wind-hour-sep"></div>
+      <div class="wind-hour-block"><span class="wind-hour-label">+2h</span><span id="wx-2" style="display:flex;align-items:center;">—</span></div>
+      <div class="wind-hour-sep"></div>
+      <div class="wind-hour-block"><span class="wind-hour-label">+3h</span><span id="wx-3" style="display:flex;align-items:center;">—</span></div>
+      <div class="wind-hour-sep"></div>
+      <div class="wind-hour-block"><span class="wind-hour-label">+4h</span><span id="wx-4" style="display:flex;align-items:center;">—</span></div>
+      <div class="wind-hour-sep"></div>
+      <div class="wind-hour-block"><span class="wind-hour-label">+5h</span><span id="wx-5" style="display:flex;align-items:center;">—</span></div>
     </div>
     </div>
   </div>
 </header>
 
-<!-- REVIER TABS -->
-<div id="revier-bar"></div>
 
-<!-- CONTROLS -->
+<!-- CONTROLS WRAPPER -->
+<div id="controls-wrapper" style="position:fixed;top:122px;left:12px;right:12px;z-index:1100;display:flex;gap:20px;align-items:flex-start;">
+
+<!-- CONTROLS: KARTE -->
 <div id="controls">
+  <select id="filter-art" style="display:none">
+    <option value="all">Alle</option>
+  </select>
   <div class="ctrl-group">
-    <label>Wildart:</label>
-    <select id="filter-art" onchange="updateMarkers()">
-      <option value="all">Alle</option>
-      <option value="Reh">Reh</option>
-      <option value="Wildschwein">Wildschwein</option>
-      <option value="Fuchs">Fuchs</option>
-      <option value="Hirsch">Hirsch</option>
-      <option value="Andere">Andere</option>
-      <option value="Ente">Ente</option>
-      <option value="Hase">Hase</option>
-    </select>
+    <label>Revier:</label>
+    <select id="revier-select" onchange="switchRevierDropdown(this.value)"></select>
+    <button onclick="openRevDialog('new')" title="Revier hinzufügen" style="padding:4px 7px;">+</button>
+    <div style="position:relative;display:inline-block;">
+      <button onclick="toggleRevierMenu()" title="Revier bearbeiten" style="padding:4px 7px;">✎</button>
+      <div id="revier-menu" style="display:none;position:absolute;top:100%;left:0;z-index:2000;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:6px;min-width:140px;box-shadow:0 6px 20px rgba(0,0,0,0.7);margin-top:4px;">
+        <button onclick="renameRevierCurrent();toggleRevierMenu();" style="display:block;width:100%;text-align:left;margin-bottom:4px;">✎ Umbenennen</button>
+        <button onclick="deleteRevierCurrent();toggleRevierMenu();" class="danger" style="display:block;width:100%;text-align:left;">✕ Löschen</button>
+      </div>
+    </div>
   </div>
   <div class="ctrl-group">
     <label>Karte:</label>
@@ -534,21 +556,28 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
       <option value="sat">Satellit</option>
     </select>
   </div>
-  <div class="ctrl-group" style="margin-left:auto;"><label>Funktionen:</label></div>
+</div>
+
+<!-- CONTROLS: FUNKTIONEN -->
+<div id="controls2">
+  <div class="ctrl-group"><label>Funktionen:</label></div>
   <button id="btn-add" onclick="toggleAdd()">+ Hochsitz</button>
-  <button id="btn-locate" onclick="toggleLocate()">⊙ Standort</button>
-  <button id="btn-zentrum" onclick="toggleZentrum()">⊛ Zentrum</button>
+  <button id="btn-markierungen" onclick="toggleMarkierungen()">⬡ Markierungen</button>
+  <button id="btn-aufgaben" onclick="toggleAufgaben()">⚙ Aufgaben</button>
+  <button id="btn-messen" onclick="toggleMessen()">↔ Messen</button>
   <button id="btn-schuss" onclick="toggleSchussrichtungen()">↗ Schussrichtungen</button>
   <button id="btn-wind-match" onclick="toggleWindMatch()">◈ Windmatch</button>
-  <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
+  <button id="btn-locate" onclick="toggleLocate()">⊙ Standort</button>
+  <button id="btn-zentrum" onclick="toggleZentrum()">⊛ Zentrum</button>
   <button id="btn-draw" onclick="toggleDraw()">⬡ Reviergrenze</button>
   <button id="btn-pirsch" onclick="togglePirsch()">⟿ Pirschweg</button>
-  <button id="btn-aufgaben" onclick="toggleAufgaben()">⚙ Aufgaben</button>
-  <button id="btn-markierungen" onclick="toggleMarkierungen()">⬡ Markierungen</button>
+  <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
   <button onclick="exportData()">↓ Export</button>
   <button onclick="importData()">↑ Import</button>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(event)">
 </div>
+
+</div><!-- end controls-wrapper -->
 
 <div id="map"></div>
 
@@ -583,7 +612,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 <!-- DRAW PANEL -->
 <div id="draw-panel">
   <h3>✏ REVIERGRENZE</h3>
-  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'JetBrains Mono',monospace;">Farbe:</div>
+  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;">Farbe:</div>
   <div class="color-row" id="color-swatches">
     <div class="color-swatch selected" style="background:#e63946" data-color="#e63946" onclick="selectColor(this)"></div>
     <div class="color-swatch" style="background:#f4a261" data-color="#f4a261" onclick="selectColor(this)"></div>
@@ -592,7 +621,16 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <div class="color-swatch" style="background:#4895ef" data-color="#4895ef" onclick="selectColor(this)"></div>
     <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectColor(this)"></div>
   </div>
-  <div style="margin:8px 0 4px;font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace;display:flex;justify-content:space-between;">
+  <div style="font-size:10px;color:var(--text2);margin:8px 0 4px;font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;">Füllfarbe:</div>
+  <div class="color-row" id="fill-color-swatches">
+    <div class="color-swatch selected" style="background:#e63946" data-color="#e63946" onclick="selectFillColor(this)"></div>
+    <div class="color-swatch" style="background:#f4a261" data-color="#f4a261" onclick="selectFillColor(this)"></div>
+    <div class="color-swatch" style="background:#c8a96e" data-color="#c8a96e" onclick="selectFillColor(this)"></div>
+    <div class="color-swatch" style="background:#52b788" data-color="#52b788" onclick="selectFillColor(this)"></div>
+    <div class="color-swatch" style="background:#4895ef" data-color="#4895ef" onclick="selectFillColor(this)"></div>
+    <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectFillColor(this)"></div>
+  </div>
+  <div style="margin:8px 0 4px;font-size:10px;color:var(--text2);font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;display:flex;justify-content:space-between;">
     <span>Füllung:</span><span id="fill-opacity-label">0%</span>
   </div>
   <input type="range" id="fill-opacity-slider" min="0" max="100" step="5" value="0"
@@ -607,8 +645,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 <!-- PIRSCHWEG PANEL -->
 <div id="pirsch-panel" style="position:fixed;bottom:40px;right:16px;z-index:1200;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:14px;min-width:230px;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.7);">
-  <h3 style="font-size:11px;font-weight:600;margin-bottom:10px;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;">⟿ PIRSCHWEG</h3>
-  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'JetBrains Mono',monospace;">Farbe:</div>
+  <h3 style="font-size:11px;font-weight:600;margin-bottom:10px;color:var(--accent);font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;letter-spacing:0.08em;text-transform:uppercase;">⟿ PIRSCHWEG</h3>
+  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;">Farbe:</div>
   <div class="color-row" id="pirsch-color-swatches">
     <div class="color-swatch selected" style="background:#f97316" data-color="#f97316" onclick="selectPirschColor(this)"></div>
     <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectPirschColor(this)"></div>
@@ -626,8 +664,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 <!-- PIRSCHWEG PANEL -->
 <div id="pirsch-panel" style="position:fixed;bottom:40px;right:16px;z-index:1200;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:14px;min-width:230px;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.7);">
-  <h3 style="font-size:11px;font-weight:600;margin-bottom:10px;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;">⟿ PIRSCHWEG</h3>
-  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'JetBrains Mono',monospace;">Farbe:</div>
+  <h3 style="font-size:11px;font-weight:600;margin-bottom:10px;color:var(--accent);font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;letter-spacing:0.08em;text-transform:uppercase;">⟿ PIRSCHWEG</h3>
+  <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;">Farbe:</div>
   <div class="color-row" id="pirsch-color-swatches">
     <div class="color-swatch selected" style="background:#f97316" data-color="#f97316" onclick="selectPirschColor(this)"></div>
     <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectPirschColor(this)"></div>
@@ -640,7 +678,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <button onclick="cancelPirsch()">Abbrechen</button>
     <button class="save" onclick="finishPirsch()">Fertig</button>
   </div>
-  <div style="font-size:10px;color:var(--text3);margin-top:6px;font-family:'JetBrains Mono',monospace;">Klicken = Punkt · Doppelklick = Ende</div>
+  <div style="font-size:10px;color:var(--text3);margin-top:6px;font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;">Klicken = Punkt · Doppelklick = Ende</div>
 </div>
 
 <!-- ADD HOCHSITZ PANEL -->
@@ -656,7 +694,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 <!-- MARKIERUNGEN PANEL -->
 <div id="markierungen-panel" style="position:fixed;bottom:40px;right:16px;z-index:1200;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:14px;min-width:200px;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.7);">
-  <h3 style="font-size:11px;font-weight:600;margin-bottom:10px;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;">⬡ MARKIERUNG</h3>
+  <h3 style="font-size:11px;font-weight:600;margin-bottom:10px;color:var(--accent);font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;letter-spacing:0.08em;text-transform:uppercase;">⬡ MARKIERUNG</h3>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
     <button onclick="selectMarkierungTyp('kirrung')" id="mbtn-kirrung" class="mbtn">🌾 Kirrung</button>
     <button onclick="selectMarkierungTyp('luderplatz')" id="mbtn-luderplatz" class="mbtn">🦴 Luderplatz</button>
@@ -664,7 +702,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <button onclick="selectMarkierungTyp('salzlecke')" id="mbtn-salzlecke" class="mbtn">🔷 Salzlecke</button>
     <button onclick="selectMarkierungTyp('wildkamera')" id="mbtn-wildkamera" class="mbtn" style="grid-column:span 2;">📷 Wildkamera</button>
   </div>
-  <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;" id="markierungen-hint">Typ wählen → Karte klicken</div>
+  <div style="font-size:10px;color:var(--text3);font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;" id="markierungen-hint">Typ wählen → Karte klicken</div>
   <div class="btn-row" style="margin-top:8px;">
     <button onclick="cancelMarkierungen()">Abbrechen</button>
   </div>
@@ -693,8 +731,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   display:none; max-height:70vh; overflow-y:auto;
 ">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase;">◫ Jagdzeiten Hessen</span>
-    <span id="jagdzeiten-monat" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);"></span>
+    <span style="font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase;">◫ Jagdzeiten Hessen</span>
+    <span id="jagdzeiten-monat" style="font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;font-size:10px;color:var(--text3);"></span>
   </div>
   <div id="jagdzeiten-body"></div>
 </div>
@@ -703,7 +741,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 <div class="stats-bar">
   <span>HS: <b id="st-hs">0</b></span>
   <span>Abschüsse 2026: <b id="st-ab">0</b></span>
-  <span>Reh: <b id="st-reh">0</b></span>
+  <span>Rehwild: <b id="st-reh">0</b></span>
   <span>Schwarzwild: <b id="st-sw">0</b></span>
   <span>Fuchs: <b id="st-fuchs">0</b></span>
   <span>Ente: <b id="st-ente">0</b></span>
@@ -864,6 +902,7 @@ async function saveRevierMeta(rev) {
       grenzen: (rev.grenzen || []).map(g => ({
         latlngs: g.latlngs,
         color: g.color || '#e63946',
+        fillColor: g.fillColor || g.color || '#e63946',
         fillOpacity: g.fillOpacity || 0,
         closed: g.closed || false
       })),
@@ -942,26 +981,45 @@ const ml = L.layerGroup().addTo(map);
 //  REVIER TABS
 // ═══════════════════════════════════════════
 function renderRevierBar() {
-  const bar = document.getElementById('revier-bar');
-  bar.innerHTML = '';
+  const sel = document.getElementById('revier-select');
+  if (!sel) return;
+  sel.innerHTML = '';
   data.reviere.forEach(rev => {
-    const tab = document.createElement('div');
-    tab.className = 'rev-tab' + (rev.id === data.activeRevId ? ' active' : '');
-    tab.innerHTML = `<span onclick="switchRevier('${rev.id}')">${rev.name}</span>` +
-      `<span class="rev-rename-btn" onclick="renameRevier('${rev.id}')" title="Umbenennen">✎</span>` +
-      (data.reviere.length > 1 ? `<span class="rev-del-btn" onclick="deleteRevier('${rev.id}')" title="Löschen">×</span>` : '');
-    bar.appendChild(tab);
+    const opt = document.createElement('option');
+    opt.value = rev.id;
+    opt.textContent = rev.name;
+    if (rev.id === data.activeRevId) opt.selected = true;
+    sel.appendChild(opt);
   });
-  const addBtn = document.createElement('div');
-  addBtn.className = 'rev-tab add-rev';
-  addBtn.textContent = '+ Revier';
-  addBtn.onclick = () => openRevDialog('new');
-  bar.appendChild(addBtn);
-
-  // update title
-  const active = getActiveRev();
-  document.getElementById('revier-title').textContent = active ? ' · ' + active.name : '—';
 }
+
+function switchRevierDropdown(id) {
+  switchRevier(id);
+}
+
+function renameRevierCurrent() {
+  openRevDialog('rename', data.activeRevId);
+}
+
+async function deleteRevierCurrent() {
+  const rev = getActiveRev();
+  if (!rev) return;
+  if (!confirm(`Revier "${rev.name}" wirklich löschen? Alle Hochsitze und Daten gehen verloren.`)) return;
+  deleteRevier(data.activeRevId);
+}
+
+function toggleRevierMenu() {
+  const menu = document.getElementById('revier-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close menu on outside click
+document.addEventListener('click', e => {
+  const menu = document.getElementById('revier-menu');
+  if (menu && !menu.parentElement.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
 
 function switchRevier(id) {
   data.activeRevId = id;
@@ -1118,7 +1176,7 @@ function updateMarkers() {
       <div class="row"><span>Wildarten</span><span>${artStr}</span></div>
       <div class="row"><span>GPS</span><span style="font-size:10px">${hs.lat.toFixed(5)}, ${hs.lon.toFixed(5)}</span></div>
       ${abList}
-      <div style="font-size:10px;color:#888;margin-top:8px;margin-bottom:3px;font-family:'JetBrains Mono',monospace;letter-spacing:0.06em;">SCHUSSRICHTUNGEN</div>
+      <div style="font-size:10px;color:#888;margin-top:8px;margin-bottom:3px;font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;letter-spacing:0.06em;">SCHUSSRICHTUNGEN</div>
       <div class="kompass-grid">
         ${['NW','N','NO','W','·','O','SW','S','SO'].map(dir => dir === '·'
           ? `<div class="kompass-btn center">·</div>`
@@ -1368,12 +1426,20 @@ const grenzenLayer = L.layerGroup().addTo(map);
 let drawHandler = null;
 let drawColor = '#e63946';
 let drawFillOpacity = 0;
+let drawFillColor = '#e63946';
 let drawMode = false;
 
 function selectColor(el) {
   document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
   el.classList.add('selected');
   drawColor = el.dataset.color;
+  if (drawHandler) { drawHandler.disable(); startDrawHandler(); }
+}
+
+function selectFillColor(el) {
+  document.querySelectorAll('#fill-color-swatches .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  drawFillColor = el.dataset.color;
   if (drawHandler) { drawHandler.disable(); startDrawHandler(); }
 }
 
@@ -1389,7 +1455,7 @@ function startDrawHandler() {
       color: drawColor,
       weight: 2.5,
       opacity: 0.9,
-      fillColor: drawColor,
+      fillColor: drawFillColor,
       fillOpacity: drawFillOpacity,
       dashArray: null
     },
@@ -1433,12 +1499,13 @@ async function renderGrenzen() {
       color: g.color || '#e63946',
       weight: 2.5,
       opacity: 0.9,
-      fillColor: g.color || '#e63946',
+      fillColor: g.fillColor || g.color || '#e63946',
       fillOpacity: g.fillOpacity || 0
     };
     const line = g.closed
       ? L.polygon(g.latlngs, opts)
       : L.polyline(g.latlngs, opts);
+    line._grenzeIdx = idx;
     line.on('dblclick', function(e) {
       L.DomEvent.stopPropagation(e);
       showGrenzePopup(e.latlng, idx, line);
@@ -1449,15 +1516,56 @@ async function renderGrenzen() {
 
 function showGrenzePopup(latlng, idx, layer) {
   map.closePopup();
-  const popup = L.popup({ className: 'grenze-popup-wrap', closeButton: true, autoClose: true })
+  const rev = getActiveRev();
+  const g = rev.grenzen[idx];
+  const currentOpacity = Math.round((g.fillOpacity || 0) * 100);
+  const popup = L.popup({ className: 'grenze-popup-wrap', closeButton: true, autoClose: true, minWidth: 210 })
     .setLatLng(latlng)
     .setContent(`
       <div class="grenze-popup">
         <h4>Reviergrenze</h4>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:10px;color:#888;margin-bottom:4px;">Füllfarbe:</div>
+          <div style="display:flex;gap:4px;margin-bottom:6px;">
+            ${['#e63946','#f4a261','#c8a96e','#52b788','#4895ef','#ffffff'].map(c =>
+              `<div onclick="saveGrenzeFillColor(${idx},'${c}')" style="width:18px;height:18px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${(g.fillColor||g.color||'#e63946')===c?'#fff':'transparent'};flex-shrink:0;"></div>`
+            ).join('')}
+          </div>
+          <div style="font-size:10px;color:#888;margin-bottom:4px;display:flex;justify-content:space-between;">
+            <span>Transparenz:</span><span id="grenze-opacity-label">${currentOpacity}%</span>
+          </div>
+          <input type="range" min="0" max="100" step="5" value="${currentOpacity}"
+            style="width:100%;accent-color:#f97316;cursor:pointer;"
+            oninput="previewGrenzeFill(${idx}, this.value)"
+            onchange="saveGrenzeFill(${idx}, this.value)">
+        </div>
         <button onclick="startEditGrenze(${idx})">✎ Bearbeiten</button>
         <button onclick="deleteGrenze(${idx})">✕ Löschen</button>
       </div>`)
     .openOn(map);
+}
+
+function previewGrenzeFill(idx, val) {
+  document.getElementById('grenze-opacity-label').textContent = val + '%';
+  // Live preview on the layer
+  grenzenLayer.eachLayer(l => {
+    if (l._grenzeIdx === idx) l.setStyle({ fillOpacity: val / 100 });
+  });
+}
+
+async function saveGrenzeFill(idx, val) {
+  const rev = getActiveRev();
+  rev.grenzen[idx].fillOpacity = parseInt(val) / 100;
+  await saveRevierMeta(rev);
+  renderGrenzen();
+}
+
+async function saveGrenzeFillColor(idx, color) {
+  const rev = getActiveRev();
+  rev.grenzen[idx].fillColor = color;
+  await saveRevierMeta(rev);
+  map.closePopup();
+  renderGrenzen();
 }
 
 async function deleteGrenze(idx) {
@@ -1491,7 +1599,7 @@ function startEditGrenze(idx) {
   const btn = document.createElement('button');
   btn.id = 'btn-grenze-fertig';
   btn.textContent = '✓ Fertig';
-  btn.style.cssText = 'position:fixed;bottom:40px;right:80px;z-index:2000;background:var(--accent);color:#000;border:none;border-radius:4px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;';
+  btn.style.cssText = 'position:fixed;bottom:40px;right:80px;z-index:2000;background:var(--accent);color:#000;border:none;border-radius:4px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;';
   btn.onclick = finishEditGrenze;
   document.body.appendChild(btn);
 }
@@ -1501,7 +1609,14 @@ async function finishEditGrenze() {
   editingLayer.editing.disable();
 
   const rev = getActiveRev();
-  rev.grenzen[editingGrenzeIdx].latlngs = editingLayer.getLatLngs().map(ll => [ll.lat, ll.lng]);
+  const g = rev.grenzen[editingGrenzeIdx];
+  const latlngs = editingLayer.getLatLngs();
+  // Polygon returns nested array
+  g.latlngs = Array.isArray(latlngs[0]) ? latlngs[0].map(ll => [ll.lat, ll.lng]) : latlngs.map(ll => [ll.lat, ll.lng]);
+  // Preserve existing fillOpacity and closed - don't reset them
+  g.fillOpacity = g.fillOpacity || 0;
+  g.closed = g.closed || false;
+  g.color = g.color || '#e63946';
   await saveRevierMeta(rev);
 
   editingLayer = null;
@@ -1541,6 +1656,7 @@ map.on(L.Draw.Event.CREATED, async function(e) {
     rev.grenzen.push({
       latlngs: coords.map(ll => [ll.lat, ll.lng]),
       color: drawColor,
+      fillColor: drawFillColor,
       fillOpacity: drawFillOpacity,
       closed: e.layerType === 'polygon'
     });
@@ -1611,21 +1727,99 @@ function drawDistanzRinge() {
 function toggleDistanz() {
   distanzMode = !distanzMode;
   document.getElementById('btn-distanz').classList.toggle('active', distanzMode);
-  map.getContainer().style.cursor = distanzMode ? 'crosshair' : '';
-  if (!distanzMode) {
+  if (distanzMode) {
+    distanzCenter = map.getCenter();
+    drawDistanzRinge();
+  } else {
     distanzLayer.clearLayers();
     distanzCenter = null;
   }
 }
 
-map.on('click', function(e) {
+map.on('move', function() {
   if (!distanzMode) return;
-  distanzCenter = e.latlng;
+  distanzCenter = map.getCenter();
   drawDistanzRinge();
 });
 
 map.on('zoomend', function() {
-  if (distanzMode && distanzCenter) drawDistanzRinge();
+  if (distanzMode) {
+    distanzCenter = map.getCenter();
+    drawDistanzRinge();
+  }
+});
+
+// ═══════════════════════════════════════════
+//  DISTANZMESSER
+// ═══════════════════════════════════════════
+const messLayer = L.layerGroup().addTo(map);
+let messMode = false;
+let messStart = null;
+
+function toggleMessen() {
+  messMode = !messMode;
+  document.getElementById('btn-messen').classList.toggle('active', messMode);
+  map.getContainer().style.cursor = messMode ? 'crosshair' : '';
+  if (!messMode) {
+    messLayer.clearLayers();
+    messStart = null;
+  }
+}
+
+function haversineM(a, b) {
+  const R = 6371000;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const x = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(a.lat * Math.PI/180) * Math.cos(b.lat * Math.PI/180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+map.on('click', function(e) {
+  if (!messMode) return;
+
+  if (!messStart) {
+    // First click – set start point
+    messStart = e.latlng;
+    messLayer.clearLayers();
+    L.circleMarker(messStart, {
+      radius: 5, color: '#4895ef', fillColor: '#4895ef', fillOpacity: 1, weight: 1.5
+    }).addTo(messLayer);
+  } else {
+    // Second click – measure and show
+    const end = e.latlng;
+    const dist = haversineM(messStart, end);
+    const label = dist >= 1000
+      ? (dist / 1000).toFixed(2) + ' km'
+      : Math.round(dist) + ' m';
+
+    // Line
+    L.polyline([messStart, end], {
+      color: '#4895ef', weight: 1.5, opacity: 0.9, dashArray: '5,4'
+    }).addTo(messLayer);
+
+    // End point
+    L.circleMarker(end, {
+      radius: 5, color: '#4895ef', fillColor: '#4895ef', fillOpacity: 1, weight: 1.5
+    }).addTo(messLayer);
+
+    // Label at midpoint
+    const mid = L.latLng(
+      (messStart.lat + end.lat) / 2,
+      (messStart.lng + end.lng) / 2
+    );
+    L.marker(mid, {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;font-size:11px;color:#4895ef;white-space:nowrap;">${label}</div>`,
+        iconAnchor: [30, 10]
+      })
+    }).addTo(messLayer);
+
+    // Reset for next measurement
+    messStart = null;
+  }
 });
 
 // ═══════════════════════════════════════════
@@ -1882,17 +2076,74 @@ function degToCompass(deg) {
 
 let currentWindCompass = null;
 
+function weatherSVG(type) {
+  const c = '#f97316'; // orange
+  const svgs = {
+    sun: `<svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
+      <circle cx="7" cy="7" r="3" fill="${c}"/>
+      <line x1="7" y1="0.5" x2="7" y2="2.5" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="7" y1="11.5" x2="7" y2="13.5" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="0.5" y1="7" x2="2.5" y2="7" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="11.5" y1="7" x2="13.5" y2="7" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="2.4" y1="2.4" x2="3.8" y2="3.8" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="10.2" y1="10.2" x2="11.6" y2="11.6" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="11.6" y1="2.4" x2="10.2" y2="3.8" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="3.8" y1="10.2" x2="2.4" y2="11.6" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>`,
+    partly: `<svg width="36" height="36" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="5.5" cy="5" r="2.5" fill="${c}"/>
+      <line x1="5.5" y1="0.5" x2="5.5" y2="2" stroke="${c}" stroke-width="1" stroke-linecap="round"/>
+      <line x1="9" y1="5" x2="10.5" y2="5" stroke="${c}" stroke-width="1" stroke-linecap="round"/>
+      <line x1="8.2" y1="2.3" x2="9.2" y2="1.3" stroke="${c}" stroke-width="1" stroke-linecap="round"/>
+      <path d="M4 9 Q4 7 6 7 Q6.5 5.5 8 6 Q10 6 10 8 Q10 9 9 9.5 Q9.5 9 4 9Z" fill="${c}" opacity="0.9"/>
+    </svg>`,
+    cloud: `<svg width="36" height="36" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 10 Q3 7.5 5.5 7.5 Q6 5.5 8 6 Q10.5 6 10.5 8.5 Q10.5 10 9 10.5 Q9.5 10 3 10Z" fill="${c}"/>
+    </svg>`,
+    fog: `<svg width="36" height="36" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+      <line x1="2" y1="5" x2="12" y2="5" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="2" y1="7.5" x2="12" y2="7.5" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="3" y1="10" x2="11" y2="10" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>`,
+    lightrain: `<svg width="36" height="36" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 8 Q3 6 5.5 6 Q6 4.5 7.5 5 Q9.5 5 9.5 7 Q9.5 8 8.5 8.5 Q9 8 3 8Z" fill="${c}"/>
+      <line x1="5" y1="10" x2="4.5" y2="12" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="7.5" y1="10" x2="7" y2="12" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>`,
+    rain: `<svg width="36" height="36" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2.5 7.5 Q2.5 5.5 5 5.5 Q5.5 4 7 4.5 Q9.5 4.5 9.5 6.5 Q9.5 7.5 8.5 8 Q9 7.5 2.5 7.5Z" fill="${c}"/>
+      <line x1="4" y1="9.5" x2="3.5" y2="11.5" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="6.5" y1="9.5" x2="6" y2="11.5" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="9" y1="9.5" x2="8.5" y2="11.5" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>`,
+    snow: `<svg width="36" height="36" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2.5 7.5 Q2.5 5.5 5 5.5 Q5.5 4 7 4.5 Q9.5 4.5 9.5 6.5 Q9.5 7.5 8.5 8 Q9 7.5 2.5 7.5Z" fill="${c}"/>
+      <text x="4" y="13" font-size="5" fill="${c}" font-family="sans-serif">* * *</text>
+    </svg>`,
+    storm: `<svg width="36" height="36" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2.5 7 Q2.5 5 5 5 Q5.5 3.5 7 4 Q9.5 4 9.5 6 Q9.5 7 8.5 7.5 Q9 7 2.5 7Z" fill="${c}"/>
+      <polyline points="7,8 5.5,10.5 7,10.5 5.5,13" stroke="${c}" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+    other: `<svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
+      <circle cx="7" cy="7" r="5.5" fill="none" stroke="${c}" stroke-width="1.2"/>
+      <line x1="7" y1="4" x2="7" y2="8" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="7" cy="10" r="0.8" fill="${c}"/>
+    </svg>`
+  };
+  return svgs[type] || svgs.other;
+}
+
 function weatherSymbol(code) {
-  if (code === 0) return '☀️';
-  if (code <= 2) return '🌤';
-  if (code === 3) return '☁️';
-  if (code <= 49) return '🌫';
-  if (code <= 59) return '🌦';
-  if (code <= 69) return '🌧';
-  if (code <= 79) return '🌨';
-  if (code <= 84) return '🌧';
-  if (code <= 99) return '⛈';
-  return '🌡';
+  if (code === 0) return weatherSVG('sun');
+  if (code <= 2) return weatherSVG('partly');
+  if (code === 3) return weatherSVG('cloud');
+  if (code <= 49) return weatherSVG('fog');
+  if (code <= 59) return weatherSVG('lightrain');
+  if (code <= 69) return weatherSVG('rain');
+  if (code <= 79) return weatherSVG('snow');
+  if (code <= 84) return weatherSVG('rain');
+  if (code <= 99) return weatherSVG('storm');
+  return weatherSVG('other');
 }
 
 async function fetchWind() {
@@ -1925,12 +2176,16 @@ async function fetchWind() {
       const arrowDeg = (deg + 180) % 360;
       document.getElementById(`wind-arrow-${offset}`).style.transform = `rotate(${arrowDeg}deg)`;
       document.getElementById(`wind-label-${offset}`).textContent = `${compass} ${spd}`;
-      document.getElementById(`wind-weather-${offset}`).textContent = weatherSymbol(codes[i]);
+      document.getElementById(`wx-${offset}`).innerHTML = weatherSymbol(codes[i]);
+      document.getElementById(`wx-${offset}`).innerHTML = weatherSymbol(codes[i]);
     }
+
   } catch(e) {
     [0,1,2,3,4,5].forEach(i => {
-      document.getElementById(`wind-label-${i}`).textContent = '—';
-      document.getElementById(`wind-weather-${i}`).textContent = '—';
+      const wl = document.getElementById(`wind-label-${i}`);
+      const ww = document.getElementById(`wind-weather-${i}`);
+      if (wl) wl.textContent = '—';
+      if (ww) ww.innerHTML = '—';
     });
   }
 }
@@ -2364,7 +2619,7 @@ function renderJagdzeiten() {
     return `<div class="jz-row">
       <div class="jz-art" style="display:flex;justify-content:space-between;">
         <span>${jz.art}</span>
-        <span style="font-size:9px;color:${statusColor};font-family:'JetBrains Mono',monospace;">${statusText}</span>
+        <span style="font-size:9px;color:${statusColor};font-family:'SF Mono',ui-monospace,'Cascadia Code',monospace;">${statusText}</span>
       </div>
       <div class="jz-months">${months}</div>
     </div>`;
