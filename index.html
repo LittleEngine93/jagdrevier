@@ -43,11 +43,11 @@ header {
   border-bottom: 1px solid var(--border);
   padding: 0 20px;
   display: flex; align-items: center; justify-content: space-between;
-  height: 72px;
+  height: 90px;
   position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
 }
 .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; overflow-x: auto; }
+.header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; overflow: visible; flex-wrap: nowrap; }
 .logo { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
 .logo span { color: var(--text3); font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 400; margin-left: 8px; text-transform: none; letter-spacing: 0; }
 .header-sep { width: 1px; height: 24px; background: var(--border2); flex-shrink: 0; }
@@ -69,7 +69,7 @@ header {
   padding: 0 20px;
   display: flex; align-items: center; gap: 4px;
   height: 36px; overflow-x: auto;
-  position: fixed; top: 72px; left: 0; right: 0; z-index: 1100;
+  position: fixed; top: 90px; left: 0; right: 0; z-index: 1100;
 }
 .rev-tab {
   font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 500;
@@ -96,7 +96,7 @@ header {
   border-bottom: 1px solid rgba(255,255,255,0.06);
   padding: 6px 20px;
   display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
-  position: fixed; top: 108px; left: 0; right: 0; z-index: 1100;
+  position: fixed; top: 126px; left: 0; right: 0; z-index: 1100;
 }
 .ctrl-group { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #000000; }
 .ctrl-sep { width: 1px; height: 16px; background: var(--border2); margin: 0 2px; }
@@ -352,7 +352,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-.leaflet-top { top: 152px !important; }
+.leaflet-top { top: 170px !important; }
 .leaflet-control-zoom { margin-top: 0 !important; }
 
 /* ── PORTRAIT MOBILE ── */
