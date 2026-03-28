@@ -43,7 +43,7 @@ header {
   border-bottom: 1px solid var(--border);
   padding: 0 20px;
   display: flex; align-items: center; justify-content: space-between;
-  height: 48px;
+  height: 72px;
   position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
 }
 .header-left { display: flex; align-items: center; gap: 10px; }
@@ -51,8 +51,13 @@ header {
 .logo span { color: var(--text3); font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 400; margin-left: 8px; text-transform: none; letter-spacing: 0; }
 .header-divider { width: 1px; height: 16px; background: var(--border2); }
 #coord-display { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text3); }
-#wind-indicator { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text2); }
-#wind-indicator svg { flex-shrink: 0; }
+#wind-indicator { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text2); }
+.wind-hour-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.wind-hour-label { font-size: 8px; color: var(--text3); letter-spacing: 0.06em; line-height: 1; }
+.wind-hour-arrow { flex-shrink: 0; }
+.wind-hour-info { font-size: 9px; color: var(--text2); white-space: nowrap; }
+.wind-hour-weather { font-size: 12px; line-height: 1; }
+.wind-hour-sep { width: 1px; height: 28px; background: var(--border2); }
 
 /* ── REVIER BAR ── */
 #revier-bar {
@@ -61,7 +66,7 @@ header {
   padding: 0 20px;
   display: flex; align-items: center; gap: 4px;
   height: 36px; overflow-x: auto;
-  position: fixed; top: 48px; left: 0; right: 0; z-index: 1100;
+  position: fixed; top: 72px; left: 0; right: 0; z-index: 1100;
 }
 .rev-tab {
   font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 500;
@@ -88,7 +93,7 @@ header {
   border-bottom: 1px solid rgba(255,255,255,0.06);
   padding: 6px 20px;
   display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
-  position: fixed; top: 84px; left: 0; right: 0; z-index: 1100;
+  position: fixed; top: 108px; left: 0; right: 0; z-index: 1100;
 }
 .ctrl-group { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #000000; }
 .ctrl-sep { width: 1px; height: 16px; background: var(--border2); margin: 0 2px; }
@@ -291,8 +296,71 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-.leaflet-top { top: 122px !important; }
+.leaflet-top { top: 152px !important; }
 .leaflet-control-zoom { margin-top: 0 !important; }
+
+/* ── PORTRAIT MOBILE ── */
+@media (max-width: 480px) and (orientation: portrait) {
+  header {
+    height: 40px;
+    padding: 0 10px;
+  }
+  .logo { font-size: 11px; }
+  .logo span { display: none; }
+  #coord-display { display: none; }
+  #wind-indicator { gap: 4px; font-size: 9px; }
+  #wind-indicator svg { width: 16px; height: 16px; }
+
+  #revier-bar {
+    height: 30px;
+    padding: 0 8px;
+    top: 40px;
+  }
+  .rev-tab { font-size: 10px; padding: 0 7px; height: 30px; }
+
+  #controls {
+    top: 70px;
+    padding: 4px 8px;
+    gap: 4px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .ctrl-group { font-size: 10px; gap: 4px; flex-shrink: 0; }
+  .ctrl-sep { display: none; }
+  select {
+    font-size: 10px;
+    padding: 3px 4px;
+    max-width: 90px;
+  }
+  button {
+    font-size: 10px;
+    padding: 3px 7px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .leaflet-top { top: 108px !important; }
+
+  .stats-bar {
+    height: 26px;
+    padding: 0 8px;
+    font-size: 9px;
+    gap: 0;
+  }
+  .stats-bar span { padding: 0 8px; }
+
+  .legend {
+    bottom: 34px;
+    padding: 5px 7px;
+  }
+  .legend-title { font-size: 7px; }
+  .legend-row span { font-size: 8px; }
+
+  #add-panel { min-width: 180px; right: 8px; bottom: 34px; padding: 10px; }
+  #draw-panel { min-width: 180px; right: 8px; bottom: 34px; padding: 10px; }
+
+  #wind-panel { bottom: 34px; padding: 6px 8px; }
+}
 </style>
 </head>
 <body>
@@ -302,11 +370,65 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <div class="logo">⊕ Jagdrevier<span id="revier-title">—</span></div>
   </div>
   <div id="wind-indicator">
-    <svg id="wind-arrow-svg" width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
-      <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2" stroke-linecap="round"/>
-      <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    </svg>
-    <span id="wind-label" style="color:var(--text3);">—</span>
+    <div class="wind-hour-block">
+      <span class="wind-hour-label">Jetzt</span>
+      <svg class="wind-hour-arrow" id="wind-arrow-0" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <span class="wind-hour-info" id="wind-label-0">—</span>
+      <span class="wind-hour-weather" id="wind-weather-0">—</span>
+    </div>
+    <div class="wind-hour-sep"></div>
+    <div class="wind-hour-block">
+      <span class="wind-hour-label">+1h</span>
+      <svg class="wind-hour-arrow" id="wind-arrow-1" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <span class="wind-hour-info" id="wind-label-1">—</span>
+      <span class="wind-hour-weather" id="wind-weather-1">—</span>
+    </div>
+    <div class="wind-hour-sep"></div>
+    <div class="wind-hour-block">
+      <span class="wind-hour-label">+2h</span>
+      <svg class="wind-hour-arrow" id="wind-arrow-2" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <span class="wind-hour-info" id="wind-label-2">—</span>
+      <span class="wind-hour-weather" id="wind-weather-2">—</span>
+    </div>
+    <div class="wind-hour-sep"></div>
+    <div class="wind-hour-block">
+      <span class="wind-hour-label">+3h</span>
+      <svg class="wind-hour-arrow" id="wind-arrow-3" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <span class="wind-hour-info" id="wind-label-3">—</span>
+      <span class="wind-hour-weather" id="wind-weather-3">—</span>
+    </div>
+    <div class="wind-hour-sep"></div>
+    <div class="wind-hour-block">
+      <span class="wind-hour-label">+4h</span>
+      <svg class="wind-hour-arrow" id="wind-arrow-4" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <span class="wind-hour-info" id="wind-label-4">—</span>
+      <span class="wind-hour-weather" id="wind-weather-4">—</span>
+    </div>
+    <div class="wind-hour-sep"></div>
+    <div class="wind-hour-block">
+      <span class="wind-hour-label">+5h</span>
+      <svg class="wind-hour-arrow" id="wind-arrow-5" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="#4895ef" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="#4895ef" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <span class="wind-hour-info" id="wind-label-5">—</span>
+      <span class="wind-hour-weather" id="wind-weather-5">—</span>
+    </div>
   </div>
   <span id="coord-display">Maus über Karte bewegen</span>
 </header>
@@ -337,12 +459,12 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   </div>
   <button id="btn-add" onclick="toggleAdd()" style="margin-left:auto;">+ Hochsitz</button>
   <button id="btn-schuss" onclick="toggleSchussrichtungen()">↗ Schussrichtungen</button>
-  <button id="btn-wind-match" onclick="toggleWindMatch()">🎯 Passende Hochsitze</button>
+  <button id="btn-wind-match" onclick="toggleWindMatch()">◈ Windmatch</button>
   <button id="btn-distanz" onclick="toggleDistanz()">◎ Distanzringe</button>
-  <button id="btn-draw" onclick="toggleDraw()">✏ Reviergrenze</button>
-  <button id="btn-clear-draw" onclick="clearGrenzen()" class="danger" title="Alle Reviergrenzen löschen">✕ Grenze</button>
+  <button id="btn-draw" onclick="toggleDraw()">⬡ Reviergrenze</button>
+  <button id="btn-clear-draw" onclick="clearGrenzen()" class="danger">✕ Grenze</button>
   <button onclick="exportData()">↓ Export</button>
-  <button onclick="importData()" title="JSON importieren">↑ Import</button>
+  <button onclick="importData()">↑ Import</button>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(event)">
 </div>
 
@@ -764,6 +886,14 @@ function updateMarkers() {
 
     const popup = `<div class="hs-popup">
       <div class="pname">HS ${hs.name}</div>
+      <div class="row"><span>Typ</span><span>
+        <select onchange="setHsTyp(${hs.id}, this.value)" style="background:#f5f5f5;border:1px solid #ddd;border-radius:3px;font-size:10px;padding:1px 4px;color:#333;">
+          <option value="" ${!hs.typ?'selected':''}>— wählen —</option>
+          <option value="Kanzel" ${hs.typ==='Kanzel'?'selected':''}>Kanzel</option>
+          <option value="Drückjagdbock" ${hs.typ==='Drückjagdbock'?'selected':''}>Drückjagdbock</option>
+          <option value="Leiter" ${hs.typ==='Leiter'?'selected':''}>Leiter</option>
+        </select>
+      </span></div>
       <div class="row"><span>Abschüsse</span><span><b>${n}</b></span></div>
       <div class="row"><span>Wildarten</span><span>${artStr}</span></div>
       <div class="row"><span>GPS</span><span style="font-size:10px">${hs.lat.toFixed(5)}, ${hs.lon.toFixed(5)}</span></div>
@@ -824,6 +954,17 @@ async function deleteAbschuss(hsId, idx) {
   map.closePopup();
   await saveHochsitz(hs, rev.id);
   updateMarkers();
+}
+
+// ═══════════════════════════════════════════
+//  SET HOCHSITZ TYP
+// ═══════════════════════════════════════════
+async function setHsTyp(hsId, typ) {
+  const rev = getActiveRev();
+  const hs = rev.hochsitze.find(h => h.id === hsId);
+  if (!hs) return;
+  hs.typ = typ || null;
+  await saveHochsitz(hs, rev.id);
 }
 
 // ═══════════════════════════════════════════
@@ -925,7 +1066,7 @@ async function saveHS() {
   const rev = getActiveRev();
   if (!rev) { alert('Kein Revier geladen. Bitte Seite neu laden.'); return; }
   if (!rev.nextId) rev.nextId = 1;
-  const hs = { id: rev.nextId++, name, lat: pendingLL.lat, lon: pendingLL.lng, abschuesse: [], schussrichtungen: [] };
+  const hs = { id: rev.nextId++, name, lat: pendingLL.lat, lon: pendingLL.lng, abschuesse: [], schussrichtungen: [], typ: null };
   rev.hochsitze.push(hs);
   if (tempM) { map.removeLayer(tempM); tempM = null; }
   cancelAdd();
@@ -1259,19 +1400,56 @@ function degToCompass(deg) {
 
 let currentWindCompass = null;
 
+function weatherSymbol(code) {
+  if (code === 0) return '☀️';
+  if (code <= 2) return '🌤';
+  if (code === 3) return '☁️';
+  if (code <= 49) return '🌫';
+  if (code <= 59) return '🌦';
+  if (code <= 69) return '🌧';
+  if (code <= 79) return '🌨';
+  if (code <= 84) return '🌧';
+  if (code <= 99) return '⛈';
+  return '🌡';
+}
+
 async function fetchWind() {
   try {
-    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.6138&longitude=9.7731&current_weather=true&wind_speed_unit=kmh');
-    const data = await res.json();
-    const deg = data.current_weather.winddirection;
-    const spd = Math.round(data.current_weather.windspeed);
-    const compass = degToCompass(deg);
-    currentWindCompass = compass;
-    const arrowDeg = (deg + 180) % 360;
-    document.getElementById('wind-arrow-svg').style.transform = `rotate(${arrowDeg}deg)`;
-    document.getElementById('wind-label').textContent = `${compass} ${spd} km/h`;
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.6138&longitude=9.7731&hourly=windspeed_10m,winddirection_10m,weathercode&current_weather=true&wind_speed_unit=kmh&forecast_days=1&timezone=auto');
+    const json = await res.json();
+
+    // Current weather for wind match
+    const curDeg = json.current_weather.winddirection;
+    currentWindCompass = degToCompass(curDeg);
+
+    // Find current hour index using closest timestamp
+    const times = json.hourly.time;
+    const speeds = json.hourly.windspeed_10m;
+    const dirs = json.hourly.winddirection_10m;
+    const codes = json.hourly.weathercode;
+    const nowMs = Date.now();
+    let idx = 0, minDiff = Infinity;
+    times.forEach((t, i) => {
+      const diff = Math.abs(new Date(t).getTime() - nowMs);
+      if (diff < minDiff) { minDiff = diff; idx = i; }
+    });
+
+    for (let offset = 0; offset < 6; offset++) {
+      const i = idx + offset;
+      if (i >= times.length) break;
+      const deg = dirs[i];
+      const spd = Math.round(speeds[i]);
+      const compass = degToCompass(deg);
+      const arrowDeg = (deg + 180) % 360;
+      document.getElementById(`wind-arrow-${offset}`).style.transform = `rotate(${arrowDeg}deg)`;
+      document.getElementById(`wind-label-${offset}`).textContent = `${compass} ${spd}`;
+      document.getElementById(`wind-weather-${offset}`).textContent = weatherSymbol(codes[i]);
+    }
   } catch(e) {
-    document.getElementById('wind-label').textContent = '—';
+    [0,1,2,3,4,5].forEach(i => {
+      document.getElementById(`wind-label-${i}`).textContent = '—';
+      document.getElementById(`wind-weather-${i}`).textContent = '—';
+    });
   }
 }
 
