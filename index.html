@@ -41,9 +41,9 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 header {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
-  padding: 0 20px;
+  padding: 8px 20px;
   display: flex; align-items: center; justify-content: space-between;
-  height: 90px;
+  height: 110px;
   position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
 }
 .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
@@ -68,14 +68,14 @@ header {
   border-bottom: 1px solid var(--border);
   padding: 0 20px;
   display: flex; align-items: center; gap: 4px;
-  height: 36px; overflow-x: auto;
-  position: fixed; top: 90px; left: 0; right: 0; z-index: 1100;
+  height: 44px; overflow-x: auto;
+  position: fixed; top: 110px; left: 0; right: 0; z-index: 1100;
 }
 .rev-tab {
   font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 500;
   background: transparent; color: var(--text3);
   border: none; border-bottom: 2px solid transparent;
-  padding: 0 12px; height: 36px; cursor: pointer; white-space: nowrap;
+  padding: 0 12px; height: 44px; cursor: pointer; white-space: nowrap;
   display: flex; align-items: center; gap: 4px;
   transition: all 0.15s;
 }
@@ -96,7 +96,7 @@ header {
   border-bottom: 1px solid rgba(255,255,255,0.06);
   padding: 6px 20px;
   display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
-  position: fixed; top: 126px; left: 0; right: 0; z-index: 1100;
+  position: fixed; top: 154px; left: 0; right: 0; z-index: 1100;
 }
 .ctrl-group { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #000000; }
 .ctrl-sep { width: 1px; height: 16px; background: var(--border2); margin: 0 2px; }
@@ -352,7 +352,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-.leaflet-top { top: 170px !important; }
+.leaflet-top { top: 198px !important; }
 .leaflet-control-zoom { margin-top: 0 !important; }
 
 /* ── PORTRAIT MOBILE ── */
