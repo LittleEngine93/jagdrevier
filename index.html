@@ -347,6 +347,16 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   box-shadow: 0 0 0 2px var(--accent);
 }
 
+/* ── JAGDZEITEN ── */
+.jz-row { margin-bottom: 10px; }
+.jz-art { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.jz-months { display: flex; gap: 2px; }
+.jz-month { width: 22px; height: 22px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-family: 'JetBrains Mono', monospace; background: var(--bg3); color: var(--text3); flex-shrink: 0; }
+.jz-month.open { background: #1b4332; color: #52b788; font-weight: 600; }
+.jz-month.current-open { background: #52b788; color: #0a0a0a; font-weight: 700; }
+.jz-month.current-closed { background: var(--bg3); color: var(--text3); outline: 1px solid var(--accent); }
+#jagdzeiten-btn:hover { border-color: var(--accent); }
+
 /* scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -512,6 +522,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
       <option value="Fuchs">Fuchs</option>
       <option value="Hirsch">Hirsch</option>
       <option value="Andere">Andere</option>
+      <option value="Ente">Ente</option>
+      <option value="Hase">Hase</option>
     </select>
   </div>
   <div class="ctrl-group">
@@ -540,12 +552,31 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 <div id="map"></div>
 
-<!-- LEGEND -->
-<div class="legend" style="padding:7px 9px;">
-  <div class="legend-title" style="margin-bottom:4px;">ABSCHÜSSE</div>
-  <div class="legend-row" style="margin-bottom:2px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:1.5px dashed #ffffff;flex-shrink:0;"></div><span style="font-size:9px;">0</span></div>
-  <div class="legend-row" style="margin-bottom:2px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #52b788;flex-shrink:0;"></div><span style="font-size:9px;">1–2</span></div>
-  <div class="legend-row" style="margin-bottom:2px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #f5c518;flex-shrink:0;"></div><span style="font-size:9px;">3–5</span></div>
+<!-- LEGEND BUTTON -->
+<div id="legend-btn" onclick="toggleLegend()" style="
+  position:fixed; bottom:40px; left:10px; z-index:1200;
+  width:40px; height:40px; border-radius:50%;
+  background:var(--bg2); border:1px solid var(--border2);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,0.5);
+  transition: border-color 0.15s;
+" title="Legende">
+  <div style="width:16px;height:1.5px;background:#fff;border-radius:1px;"></div>
+  <div style="width:16px;height:1.5px;background:#fff;border-radius:1px;"></div>
+  <div style="width:16px;height:1.5px;background:#fff;border-radius:1px;"></div>
+</div>
+
+<!-- LEGEND PANEL -->
+<div id="legend-panel" style="
+  position:fixed; bottom:88px; left:10px; z-index:1200;
+  background:rgba(10,10,10,0.93); border:1px solid var(--border2);
+  border-radius:5px; padding:10px 12px; font-size:10px; color:var(--text2);
+  display:none;
+">
+  <div class="legend-title" style="margin-bottom:6px;">ABSCHÜSSE</div>
+  <div class="legend-row" style="margin-bottom:3px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:1.5px dashed #ffffff;flex-shrink:0;"></div><span style="font-size:9px;">0</span></div>
+  <div class="legend-row" style="margin-bottom:3px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #52b788;flex-shrink:0;"></div><span style="font-size:9px;">1–2</span></div>
+  <div class="legend-row" style="margin-bottom:3px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #f5c518;flex-shrink:0;"></div><span style="font-size:9px;">3–5</span></div>
   <div class="legend-row"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #e63946;flex-shrink:0;"></div><span style="font-size:9px;">6+</span></div>
 </div>
 
@@ -642,13 +673,43 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 <!-- GRENZE EDIT HINT -->
 <div class="grenze-edit-hint" id="grenze-edit-hint">Punkte verschieben → Fertig klicken</div>
 
+<!-- JAGDZEITEN BUTTON -->
+<div id="jagdzeiten-btn" onclick="toggleJagdzeiten()" style="
+  position:fixed; bottom:40px; right:16px; z-index:1200;
+  width:40px; height:40px; border-radius:50%;
+  background:var(--bg2); border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:18px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.5);
+  transition: border-color 0.15s;
+" title="Jagdzeiten">◫</div>
+
+<!-- JAGDZEITEN PANEL -->
+<div id="jagdzeiten-panel" style="
+  position:fixed; bottom:88px; right:16px; z-index:1200;
+  background:var(--bg2); border:1px solid var(--border2);
+  border-radius:8px; padding:14px; width:320px;
+  box-shadow:0 6px 30px rgba(0,0,0,0.8);
+  display:none; max-height:70vh; overflow-y:auto;
+">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase;">◫ Jagdzeiten Hessen</span>
+    <span id="jagdzeiten-monat" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);"></span>
+  </div>
+  <div id="jagdzeiten-body"></div>
+</div>
+
 <!-- STATS BAR -->
 <div class="stats-bar">
-  <span>Hochsitze: <b id="st-hs">0</b></span>
-  <span>Abschüsse: <b id="st-ab">0</b></span>
-  <span>Aktivster: <b id="st-top">—</b></span>
-  <span>Ohne Abschuss: <b id="st-leer">0</b></span>
-  <span id="st-save" style="margin-left:auto;color:#3d3a36;">●&nbsp;gespeichert</span>
+  <span>HS: <b id="st-hs">0</b></span>
+  <span>Abschüsse 2026: <b id="st-ab">0</b></span>
+  <span>Reh: <b id="st-reh">0</b></span>
+  <span>Schwarzwild: <b id="st-sw">0</b></span>
+  <span>Fuchs: <b id="st-fuchs">0</b></span>
+  <span>Ente: <b id="st-ente">0</b></span>
+  <span>Hase: <b id="st-hase">0</b></span>
+  <span id="st-zoom">Zoom: <b id="zoom-pct">—</b></span>
+  <span id="st-save">●&nbsp;gespeichert</span>
 </div>
 
 <!-- ABSCHUSS MODAL -->
@@ -662,6 +723,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
         <option value="Wildschwein">Wildschwein</option>
         <option value="Fuchs">Fuchs</option>
         <option value="Hirsch">Hirsch</option>
+        <option value="Ente">Ente</option>
+        <option value="Hase">Hase</option>
         <option value="Andere">Andere</option>
       </select>
     </div>
@@ -849,6 +912,9 @@ function saveData() {
 //  MAP SETUP
 // ═══════════════════════════════════════════
 const map = L.map('map', { center: [50.6138, 9.7731], zoom: 13 });
+// Custom pane for arrows - below default marker pane (z-index 600)
+map.createPane('schussPane');
+map.getPane('schussPane').style.zIndex = 350;
 
 const basemaps = {
   osm:  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',   { attribution: '© OpenStreetMap', maxZoom: 19 }),
@@ -993,7 +1059,9 @@ function updateMarkers() {
     const n = getCnt(hs);
     const label = getHsLabel(hs.name);
     const fontSize = label.length <= 2 ? 13 : 11;
-    const coreR = 16;
+    const zoom = map.getZoom();
+    const zScale = Math.pow(2, (zoom - 13) * 0.2);
+    const coreR = Math.max(4, Math.round(10 * zScale));
     const ringW = getRingW(n);
     const c = getColor(n);
     const pad = n > 0 ? Math.ceil(ringW / 2) + 5 : 4;
@@ -1071,13 +1139,23 @@ function updateStats() {
   const rev = getActiveRev();
   if (!rev) return;
   const hs = rev.hochsitze;
-  const tot = hs.reduce((s,h)=>s+getCnt(h), 0);
-  const top = [...hs].sort((a,b)=>getCnt(b)-getCnt(a))[0];
-  const leer = hs.filter(h=>getCnt(h)===0).length;
-  document.getElementById('st-hs').textContent   = hs.length;
-  document.getElementById('st-ab').textContent   = tot;
-  document.getElementById('st-top').textContent  = top && getCnt(top) > 0 ? top.name : '—';
-  document.getElementById('st-leer').textContent = leer;
+  const year = '2026';
+
+  // All abschuesse from current year
+  const allAb = hs.flatMap(h => h.abschuesse || []).filter(a => (a.datum || '').startsWith(year));
+
+  const count = (art) => allAb.filter(a =>
+    art === 'Schwarzwild' ? a.art === 'Wildschwein' || a.art === 'Schwarzwild'
+    : a.art === art
+  ).length;
+
+  document.getElementById('st-hs').textContent    = hs.length;
+  document.getElementById('st-ab').textContent    = allAb.length;
+  document.getElementById('st-reh').textContent   = count('Reh');
+  document.getElementById('st-sw').textContent    = count('Schwarzwild');
+  document.getElementById('st-fuchs').textContent = count('Fuchs');
+  document.getElementById('st-ente').textContent  = count('Ente');
+  document.getElementById('st-hase').textContent  = count('Hase');
 }
 
 // ═══════════════════════════════════════════
@@ -1553,7 +1631,7 @@ map.on('zoomend', function() {
 // ═══════════════════════════════════════════
 //  SCHUSSRICHTUNGEN
 // ═══════════════════════════════════════════
-const schussLayer = L.layerGroup().addTo(map);
+const schussLayer = L.layerGroup({ pane: 'schussPane' }).addTo(map);
 let schussMode = false;
 
 const DIR_ANGLES = { N:0, NO:45, O:90, SO:135, S:180, SW:225, W:270, NW:315 };
@@ -1587,33 +1665,39 @@ function drawSchussrichtungen() {
   schussLayer.clearLayers();
   const rev = getActiveRev();
   if (!rev) return;
+
+  // Size scales with zoom: at zoom 13 = 24px, zoom 16 = ~40px
+  const zoom = map.getZoom();
+  const sz = Math.round(24 * Math.pow(2, (zoom - 13) * 0.2));
+  const half = sz / 2;
+
   rev.hochsitze.forEach(hs => {
     if (!hs.schussrichtungen || hs.schussrichtungen.length === 0) return;
     if (!isWindMatch(hs)) return;
+
+    // Offset from center: icon radius in degrees
+    const cosLng = Math.cos(hs.lat * Math.PI / 180);
+    // ~(icon half size + small gap) in degrees
+    const offset = (getIconSize(20) * 0.55 + half * 0.5) * 0.0000088;
+
     hs.schussrichtungen.forEach(dir => {
       const angleDeg = DIR_ANGLES[dir];
-      const angleRad = (angleDeg - 90) * Math.PI / 180;
-      // lat/lng offset - correct for longitude compression
-      const latOffset = Math.sin(angleRad + Math.PI/2) * ARROW_LEN;
-      const lngOffset = Math.cos(angleRad + Math.PI/2) * ARROW_LEN / Math.cos(hs.lat * Math.PI / 180);
-      const endLat = hs.lat + Math.cos(angleDeg * Math.PI / 180) * ARROW_LEN;
-      const endLng = hs.lon + Math.sin(angleDeg * Math.PI / 180) * ARROW_LEN / Math.cos(hs.lat * Math.PI / 180);
+      const rad = angleDeg * Math.PI / 180;
 
-      // Arrow line
-      const line = L.polyline([[hs.lat, hs.lon], [endLat, endLng]], {
-        color: '#f97316', weight: 2, opacity: 0.9
-      });
+      const arrowLat = hs.lat + Math.cos(rad) * offset;
+      const arrowLng = hs.lon + Math.sin(rad) * offset / cosLng;
 
-      // Arrowhead using rotated marker
-      const headSvg = `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"
-        style="transform:rotate(${angleDeg}deg);transform-origin:center;">
-        <polygon points="10,1 18,19 10,14 2,19" fill="#f97316" opacity="0.9"/>
+      // Single SVG arrow element: stem + head
+      const svg = `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+        style="transform:rotate(${angleDeg}deg);transform-origin:center;display:block;">
+        <line x1="12" y1="22" x2="12" y2="6" stroke="#f97316" stroke-width="2" stroke-linecap="round"/>
+        <polygon points="12,1 18,10 12,7 6,10" fill="#f97316"/>
       </svg>`;
-      const headIcon = L.divIcon({ html: headSvg, className: '', iconSize: [20,20], iconAnchor: [10,10] });
-      const head = L.marker([endLat, endLng], { icon: headIcon });
 
-      line.addTo(schussLayer);
-      head.addTo(schussLayer);
+      L.marker([arrowLat, arrowLng], {
+        icon: L.divIcon({ html: svg, className: '', iconSize: [sz, sz], iconAnchor: [half, half] }),
+        pane: 'schussPane'
+      }).addTo(schussLayer);
     });
   });
 }
@@ -1691,6 +1775,34 @@ function stopLocate() {
 }
 
 // ═══════════════════════════════════════════
+//  ZOOM DISPLAY
+// ═══════════════════════════════════════════
+function updateZoomDisplay() {
+  const zoom = map.getZoom();
+  const maxZoom = 19;
+  const pct = Math.round((zoom / maxZoom) * 100);
+  document.getElementById('zoom-pct').textContent = pct + '%';
+}
+map.on('zoomend', updateZoomDisplay);
+
+// Zoom-based icon size: base size at zoom 13, scales linearly
+function getIconSize(baseSize) {
+  const zoom = map.getZoom();
+  const scale = Math.pow(2, (zoom - 13) * 0.2);
+  return Math.max(8, Math.round(baseSize * scale));
+}
+
+// Re-render all symbol layers on zoom
+map.on('zoomend', () => {
+  updateMarkers();
+  renderAufgaben();
+  renderMarkierungen();
+  renderZentrum();
+  renderPirschWege();
+  if (schussMode) drawSchussrichtungen();
+});
+
+// ═══════════════════════════════════════════
 //  WIND-MATCH
 // ═══════════════════════════════════════════
 let windMatchMode = false;
@@ -1731,6 +1843,34 @@ function isWindMatch(hs) {
 //  JAGDKARTE OVERLAY
 // ═══════════════════════════════════════════
 
+
+// ═══════════════════════════════════════════
+//  ZOOM DISPLAY
+// ═══════════════════════════════════════════
+function updateZoomDisplay() {
+  const zoom = map.getZoom();
+  const maxZoom = 19;
+  const pct = Math.round((zoom / maxZoom) * 100);
+  document.getElementById('zoom-pct').textContent = pct + '%';
+}
+map.on('zoomend', updateZoomDisplay);
+
+// Zoom-based icon size: base size at zoom 13, scales linearly
+function getIconSize(baseSize) {
+  const zoom = map.getZoom();
+  const scale = Math.pow(2, (zoom - 13) * 0.2);
+  return Math.max(8, Math.round(baseSize * scale));
+}
+
+// Re-render all symbol layers on zoom
+map.on('zoomend', () => {
+  updateMarkers();
+  renderAufgaben();
+  renderMarkierungen();
+  renderZentrum();
+  renderPirschWege();
+  if (schussMode) drawSchussrichtungen();
+});
 
 // ═══════════════════════════════════════════
 //  WIND
@@ -1847,11 +1987,12 @@ function renderAufgaben() {
   const rev = getActiveRev();
   if (!rev || !rev.aufgaben) return;
   rev.aufgaben.forEach(a => {
+    const sz = getIconSize(20);
     const icon = L.divIcon({
-      html: '<div class="aufgaben-icon">⚙</div>',
+      html: `<div class="aufgaben-icon" style="width:${sz}px;height:${sz}px;font-size:${Math.round(sz*0.55)}px;">⚙</div>`,
       className: '',
-      iconSize: [26, 26],
-      iconAnchor: [13, 13]
+      iconSize: [sz, sz],
+      iconAnchor: [sz/2, sz/2]
     });
     const marker = L.marker([a.lat, a.lon], { icon });
     const popup = `<div class="hs-popup">
@@ -2010,11 +2151,12 @@ function renderZentrum() {
   const rev = getActiveRev();
   if (!rev || !rev.zentrum) return;
   const z = rev.zentrum;
+  const sz = getIconSize(10);
   const icon = L.divIcon({
-    html: '<div class="zentrum-icon"></div>',
+    html: `<div class="zentrum-icon" style="width:${sz}px;height:${sz}px;"></div>`,
     className: '',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
+    iconSize: [sz, sz],
+    iconAnchor: [sz/2, sz/2]
   });
   L.marker([z.lat, z.lon], { icon })
     .bindTooltip('Revier-Zentrum', { permanent: false, direction: 'top' })
@@ -2096,11 +2238,12 @@ function renderMarkierungen() {
   rev.markierungen.forEach(m => {
     const t = MARKIERUNG_TYPES[m.typ] || { emoji: '📍', label: m.typ };
     const silverStyle = t.silver ? 'filter:grayscale(1) brightness(1.8);' : '';
+    const sz = getIconSize(20);
     const icon = L.divIcon({
-      html: `<div class="markierung-icon" style="${silverStyle}">${t.emoji}</div>`,
+      html: `<div class="markierung-icon" style="width:${sz}px;height:${sz}px;font-size:${Math.round(sz*0.55)}px;${silverStyle}">${t.emoji}</div>`,
       className: '',
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
+      iconSize: [sz, sz],
+      iconAnchor: [sz/2, sz/2]
     });
     const marker = L.marker([m.lat, m.lon], { icon });
     const popup = `<div class="hs-popup">
@@ -2111,6 +2254,131 @@ function renderMarkierungen() {
     marker.bindPopup(popup);
     marker.addTo(markierungenLayer);
   });
+}
+
+// ═══════════════════════════════════════════
+//  JAGDZEITEN
+// ═══════════════════════════════════════════
+const JAGDZEITEN = [
+  {
+    art: 'Rehbock',
+    zeiten: [{ von: 4, bis: 1 }]
+  },
+  {
+    art: 'Ricke & Schmalreh',
+    zeiten: [{ von: 9, bis: 2 }]  // Sep-Feb (over year boundary)
+  },
+  {
+    art: 'Rehkitz',
+    zeiten: [{ von: 9, bis: 2 }]
+  },
+  {
+    art: 'Schwarzwild',
+    zeiten: [{ von: 1, bis: 12 }]  // ganzjährig
+  },
+  {
+    art: 'Rotwild (Hirsch)',
+    zeiten: [{ von: 8, bis: 2 }]
+  },
+  {
+    art: 'Rotwild (Kahlwild)',
+    zeiten: [{ von: 11, bis: 2 }]
+  },
+  {
+    art: 'Fuchs',
+    zeiten: [{ von: 1, bis: 12 }]  // ganzjährig
+  },
+  {
+    art: 'Steinmarder',
+    zeiten: [{ von: 1, bis: 12 }]
+  },
+  {
+    art: 'Baummarder',
+    zeiten: [{ von: 10, bis: 2 }]
+  },
+  {
+    art: 'Iltis',
+    zeiten: [{ von: 8, bis: 3 }]
+  },
+  {
+    art: 'Feldhase',
+    zeiten: [{ von: 10, bis: 12 }]
+  },
+  {
+    art: 'Stockente',
+    zeiten: [{ von: 9, bis: 1 }]
+  },
+  {
+    art: 'Wildkaninchen',
+    zeiten: [{ von: 1, bis: 12 }]
+  }
+];
+
+const MONTH_NAMES = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+
+function isMonthOpen(month, zeiten) {
+  // month is 1-12
+  return zeiten.some(z => {
+    if (z.von <= z.bis) return month >= z.von && month <= z.bis;
+    // wraps over year (e.g. Sep-Feb)
+    return month >= z.von || month <= z.bis;
+  });
+}
+
+let jagdzeitenVisible = false;
+
+function toggleJagdzeiten() {
+  jagdzeitenVisible = !jagdzeitenVisible;
+  const panel = document.getElementById('jagdzeiten-panel');
+  const btn = document.getElementById('jagdzeiten-btn');
+  panel.style.display = jagdzeitenVisible ? 'block' : 'none';
+  btn.style.borderColor = jagdzeitenVisible ? 'var(--accent)' : 'var(--border2)';
+  btn.style.color = jagdzeitenVisible ? 'var(--accent)' : 'inherit';
+  if (jagdzeitenVisible) renderJagdzeiten();
+}
+
+function renderJagdzeiten() {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1; // 1-12
+  const monthName = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'][currentMonth - 1];
+
+  document.getElementById('jagdzeiten-monat').textContent = monthName;
+
+  const body = document.getElementById('jagdzeiten-body');
+  body.innerHTML = JAGDZEITEN.map(jz => {
+    const currentOpen = isMonthOpen(currentMonth, jz.zeiten);
+    const months = MONTH_NAMES.map((m, i) => {
+      const mn = i + 1;
+      const open = isMonthOpen(mn, jz.zeiten);
+      const isCurrent = mn === currentMonth;
+      const cls = isCurrent && open ? 'jz-month current-open'
+                : isCurrent ? 'jz-month current-closed'
+                : open ? 'jz-month open'
+                : 'jz-month';
+      return `<div class="${cls}">${m}</div>`;
+    }).join('');
+
+    const statusColor = currentOpen ? '#52b788' : 'var(--text3)';
+    const statusText = currentOpen ? '● bejagbar' : '○ Schonzeit';
+
+    return `<div class="jz-row">
+      <div class="jz-art" style="display:flex;justify-content:space-between;">
+        <span>${jz.art}</span>
+        <span style="font-size:9px;color:${statusColor};font-family:'JetBrains Mono',monospace;">${statusText}</span>
+      </div>
+      <div class="jz-months">${months}</div>
+    </div>`;
+  }).join('<div style="border-top:1px solid var(--border);margin:6px 0;"></div>');
+}
+
+// ═══════════════════════════════════════════
+//  LEGEND TOGGLE
+// ═══════════════════════════════════════════
+let legendVisible = false;
+function toggleLegend() {
+  legendVisible = !legendVisible;
+  document.getElementById('legend-panel').style.display = legendVisible ? 'block' : 'none';
+  document.getElementById('legend-btn').style.borderColor = legendVisible ? 'var(--accent)' : 'var(--border2)';
 }
 
 // ═══════════════════════════════════════════
@@ -2125,6 +2393,7 @@ function renderMarkierungen() {
   renderGrenzen();
   fetchWind();
   fetchSun();
+  updateZoomDisplay();
   renderAufgaben();
   renderMarkierungen();
   renderPirschwege();
