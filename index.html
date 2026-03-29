@@ -1111,7 +1111,9 @@ function showSaveStatus(ok) {
 }
 
 // ── Check auth on load ──
-checkAuth();
+// checkAuth(); // DISABLED TEMPORARILY
+document.getElementById('login-screen').style.display = 'none';
+initApp();
 
 // ── Load all data from Supabase ──
 async function loadData() {
