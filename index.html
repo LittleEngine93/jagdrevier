@@ -1049,6 +1049,9 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 const SUPA_URL  = 'https://yjdwaoyvzzhrrjiedume.supabase.co';
 const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqZHdhb3l2enpocnJqaWVkdW1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDcwODIsImV4cCI6MjA5MDIyMzA4Mn0.mu4xjdQ3jTaSItaMOEcY4ldDCi666AKjbHMBHrcj7y0';
 // ── AUTH ──
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── AUTH ──
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
@@ -1066,26 +1069,22 @@ async function doLogin() {
     btn.disabled = false;
   } else {
     document.getElementById('login-screen').style.display = 'none';
+    initApp();
   }
 }
 
-// Allow Enter key to submit
-document.addEventListener('DOMContentLoaded', () => {
-  ['login-email','login-password'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-  });
-});
-
-// Check if already logged in
 async function checkAuth() {
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
     document.getElementById('login-screen').style.display = 'none';
+    initApp();
   }
 }
 
-const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+['login-email','login-password'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+});
 
 // ═══════════════════════════════════════════
 //  DATA MODEL
@@ -3309,7 +3308,7 @@ function toggleLegend() {
       renderGrenzen();
     })
     .subscribe();
-})();
+}
 
 </script>
 <script>
