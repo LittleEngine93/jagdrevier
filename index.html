@@ -711,6 +711,12 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   <div style="font-family:'SF Mono',ui-monospace,monospace;font-size:9px;color:var(--text3);margin-bottom:8px;letter-spacing:0.08em;text-transform:uppercase;">Layer</div>
   <div style="display:flex;flex-direction:column;gap:6px;">
     <label class="filter-row"><input type="checkbox" id="fl-hochsitze" checked onchange="applyLayerFilter()"><span>Hochsitze</span></label>
+    <div style="margin-left:12px;margin-top:2px;display:flex;flex-direction:column;gap:4px;" id="fl-typ-group">
+      <label class="filter-row" style="font-size:10px;"><input type="checkbox" id="fl-typ-kanzel" checked onchange="applyLayerFilter()"><span style="color:#4a8fd4;">▪ Kanzel</span></label>
+      <label class="filter-row" style="font-size:10px;"><input type="checkbox" id="fl-typ-drück" checked onchange="applyLayerFilter()"><span style="color:#c45d0a;">▪ Drückjagdbock</span></label>
+      <label class="filter-row" style="font-size:10px;"><input type="checkbox" id="fl-typ-leiter" checked onchange="applyLayerFilter()"><span style="color:#a0286e;">▪ Leiter</span></label>
+      <label class="filter-row" style="font-size:10px;"><input type="checkbox" id="fl-typ-kein" checked onchange="applyLayerFilter()"><span>▪ Kein Typ</span></label>
+    </div>
     <label class="filter-row"><input type="checkbox" id="fl-anblick" checked onchange="applyLayerFilter()"><span>Anblick</span></label>
     <label class="filter-row"><input type="checkbox" id="fl-markierungen" checked onchange="applyLayerFilter()"><span>Markierungen</span></label>
     <label class="filter-row"><input type="checkbox" id="fl-aufgaben" checked onchange="applyLayerFilter()"><span>Aufgaben</span></label>
@@ -1549,7 +1555,9 @@ function updateMarkers() {
       <button class="add-btn" style="background:var(--bg3);color:var(--text2);border-color:var(--border2);" onclick="startMoveHS(${hs.id})">✎ Position verschieben</button>
       <button class="del-hs-btn" onclick="deleteHS(${hs.id})">Hochsitz löschen</button>
     </div>`;
-    L.marker([hs.lat, hs.lon], { icon }).bindPopup(popup).addTo(ml);
+    const marker = L.marker([hs.lat, hs.lon], { icon }).bindPopup(popup);
+    marker._hsId = hs.id;
+    marker.addTo(ml);
   });
   updateStats();
   if (schussMode) drawSchussrichtungen();
@@ -3453,7 +3461,7 @@ function drawBockradar() {
         weight: 1.5,
         opacity: 0.8,
         fillColor: '#e63946',
-        fillOpacity: 0.5
+        fillOpacity: 0.25
       }).addTo(bockradarLayer);
       // Full opacity marker
       if (marker) marker.setOpacity(1);
@@ -3514,9 +3522,37 @@ function toggleFilter() {
 function applyLayerFilter() {
   const show = (id) => document.getElementById(id)?.checked;
 
-  // Hochsitze
-  if (show('fl-hochsitze')) { if (!map.hasLayer(ml)) ml.addTo(map); }
-  else { map.removeLayer(ml); }
+  // Show/hide typ subgroup
+  const typGroup = document.getElementById('fl-typ-group');
+  if (typGroup) typGroup.style.opacity = show('fl-hochsitze') ? '1' : '0.3';
+
+  // Hochsitze + Typ-Filter
+  if (show('fl-hochsitze')) {
+    if (!map.hasLayer(ml)) ml.addTo(map);
+    // Apply typ sub-filter
+    const showKanzel = show('fl-typ-kanzel');
+    const showDrück = show('fl-typ-drück');
+    const showLeiter = show('fl-typ-leiter');
+    const showKein = show('fl-typ-kein');
+    ml.eachLayer(l => {
+      const rev = getActiveRev();
+      const hs = rev && rev.hochsitze.find(h => h.id === l._hsId);
+      if (!hs) return;
+      const typ = hs.typ || null;
+      const visible =
+        (typ === 'Kanzel' && showKanzel) ||
+        (typ === 'Drückjagdbock' && showDrück) ||
+        (typ === 'Leiter' && showLeiter) ||
+        (!typ && showKein);
+      l.setOpacity(visible ? 1 : 0);
+      if (l.getElement) {
+        const el = l.getElement();
+        if (el) el.style.pointerEvents = visible ? '' : 'none';
+      }
+    });
+  } else {
+    map.removeLayer(ml);
+  }
 
   // Anblick
   if (show('fl-anblick')) { if (!map.hasLayer(anblickLayer)) anblickLayer.addTo(map); }
