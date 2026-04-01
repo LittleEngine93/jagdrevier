@@ -616,6 +616,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   <button id="btn-messen" onclick="toggleMessen()">↔ Messen</button>
   <button id="btn-schuss" onclick="toggleSchussrichtungen()">↗ Schussrichtungen</button>
   <button id="btn-wind-match" onclick="toggleWindMatch()">◈ Windmatch</button>
+  <button id="btn-bockradar" onclick="toggleBockradar()">⊕ Bockradar</button>
   <button id="btn-locate" onclick="toggleLocate()">⊙ Standort</button>
   <button id="btn-zentrum" onclick="toggleZentrum()">⊛ Zentrum</button>
   <button id="btn-draw" onclick="toggleDraw()">⬡ Reviergrenze</button>
@@ -1213,7 +1214,8 @@ async function loadData() {
         const hochsitze = (hsData || []).map(h => ({
           id: h.id, name: h.name, lat: h.lat, lon: h.lon,
           abschuesse: h.abschuesse || [],
-          schussrichtungen: h.schussrichtungen || []
+          schussrichtungen: h.schussrichtungen || [],
+          typ: h.typ || null
         }));
         const maxId = hochsitze.length > 0 ? Math.max(...hochsitze.map(h => h.id)) + 1 : 1;
         const nextId = Math.max(rev.next_id || 1, maxId);
@@ -1481,7 +1483,17 @@ function updateMarkers() {
       : `<circle cx="${cx}" cy="${cx}" r="${coreR + 4}" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>`;
     const svg = `<svg width="${sz}" height="${sz}" xmlns="http://www.w3.org/2000/svg">
       ${ringEl}
-      <circle cx="${cx}" cy="${cx}" r="${coreR}" fill="#111111" stroke="#333333" stroke-width="1.5"/>
+      <circle cx="${cx}" cy="${cx}" r="${coreR}" fill="${
+        hs.typ === 'Kanzel' ? '#1a3a6e' :
+        hs.typ === 'Drückjagdbock' ? '#c45d0a' :
+        hs.typ === 'Leiter' ? '#a0286e' :
+        '#111111'
+      }" stroke="${
+        hs.typ === 'Kanzel' ? '#2a5aab' :
+        hs.typ === 'Drückjagdbock' ? '#f97316' :
+        hs.typ === 'Leiter' ? '#e040a0' :
+        '#333333'
+      }" stroke-width="1.5"/>
       <text x="${cx}" y="${cx + fontSize * 0.38}" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="#ffffff" font-family="'IBM Plex Mono','Courier New',monospace">${label}</text>
     </svg>`;
     const matched = isWindMatch(hs);
@@ -1534,6 +1546,7 @@ function updateMarkers() {
         ).join('')}
       </div>
       <button class="add-btn" onclick="openModal(${hs.id})">+ Abschuss eintragen</button>
+      <button class="add-btn" style="background:var(--bg3);color:var(--text2);border-color:var(--border2);" onclick="startMoveHS(${hs.id})">✎ Position verschieben</button>
       <button class="del-hs-btn" onclick="deleteHS(${hs.id})">Hochsitz löschen</button>
     </div>`;
     L.marker([hs.lat, hs.lon], { icon }).bindPopup(popup).addTo(ml);
@@ -1718,6 +1731,20 @@ document.getElementById('new-name').addEventListener('keydown', e => { if (e.key
 
 map.on('click', e => {
   if (anblickMode) { openAnblickModal(e.latlng); return; }
+  if (movingHsId !== null) {
+    const rev = getActiveRev();
+    const hs = rev.hochsitze.find(h => h.id === movingHsId);
+    if (hs) {
+      hs.lat = e.latlng.lat;
+      hs.lon = e.latlng.lng;
+      saveHochsitz(hs, rev.id);
+      updateMarkers();
+      if (schussMode) drawSchussrichtungen();
+      if (bockradarMode) setTimeout(drawBockradar, 50);
+    }
+    cancelMoveHS();
+    return;
+  }
   if (zentrumMode) { setZentrum(e.latlng); return; }
   if (markierungenMode && activeMarkierungTyp) { addMarkierung(e.latlng); return; }
   if (aufgabenMode) { addAufgabe(e.latlng); return; }
@@ -2340,6 +2367,7 @@ function getIconSize(baseSize) {
 // Re-render all symbol layers on zoom
 map.on('zoomend', () => {
   updateMarkers();
+  if (bockradarMode) setTimeout(drawBockradar, 50);
   renderAufgaben();
   renderMarkierungen();
   renderAnblicke();
@@ -2366,6 +2394,7 @@ const DIR_NEIGHBORS = {
 };
 
 function toggleWindMatch() {
+  if (bockradarMode) { toggleBockradar(); }
   windMatchMode = !windMatchMode;
   document.getElementById('btn-wind-match').classList.toggle('active', windMatchMode);
   updateMarkers();
@@ -2411,6 +2440,7 @@ function getIconSize(baseSize) {
 // Re-render all symbol layers on zoom
 map.on('zoomend', () => {
   updateMarkers();
+  if (bockradarMode) setTimeout(drawBockradar, 50);
   renderAufgaben();
   renderMarkierungen();
   renderAnblicke();
@@ -3381,6 +3411,82 @@ function printKarte() {
   // Invalidate map size before printing
   map.invalidateSize();
   window.print();
+}
+
+// ═══════════════════════════════════════════
+//  BOCKRADAR
+// ═══════════════════════════════════════════
+const bockradarLayer = L.layerGroup().addTo(map);
+let bockradarMode = false;
+
+function toggleBockradar() {
+  bockradarMode = !bockradarMode;
+  document.getElementById('btn-bockradar').classList.toggle('active', bockradarMode);
+  if (bockradarMode) {
+    drawBockradar();
+  } else {
+    bockradarLayer.clearLayers();
+    // Restore all markers to full opacity
+    updateMarkers();
+  }
+}
+
+function drawBockradar() {
+  bockradarLayer.clearLayers();
+  const rev = getActiveRev();
+  if (!rev) return;
+  const year = new Date().getFullYear().toString();
+
+  rev.hochsitze.forEach(hs => {
+    const marker = ml.getLayers().find(l => l._hsId === hs.id);
+    const bockErlegt = (hs.abschuesse || []).some(a =>
+      (a.datum || '').startsWith(year) &&
+      (a.art === 'Reh' || a.art === 'Hirsch') &&
+      (a.geschlecht === 'Männlich')
+    );
+
+    if (bockErlegt) {
+      // Show 200m red circle
+      L.circle([hs.lat, hs.lon], {
+        radius: 200,
+        color: '#e63946',
+        weight: 1.5,
+        opacity: 0.8,
+        fillColor: '#e63946',
+        fillOpacity: 0.5
+      }).addTo(bockradarLayer);
+      // Full opacity marker
+      if (marker) marker.setOpacity(1);
+    } else {
+      // Fade out marker
+      if (marker) marker.setOpacity(0.15);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+//  HOCHSITZ POSITION VERSCHIEBEN
+// ═══════════════════════════════════════════
+let movingHsId = null;
+
+function startMoveHS(hsId) {
+  movingHsId = hsId;
+  map.closePopup();
+  map.getContainer().style.cursor = 'crosshair';
+
+  // Show hint
+  const hint = document.createElement('div');
+  hint.id = 'move-hs-hint';
+  hint.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(10,10,10,0.9);border:1px solid var(--accent);border-radius:4px;padding:6px 14px;font-size:11px;color:var(--accent);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;';
+  hint.innerHTML = 'Neue Position auf der Karte klicken · <span onclick="cancelMoveHS()" style="cursor:pointer;text-decoration:underline;">Abbrechen</span>';
+  document.body.appendChild(hint);
+}
+
+function cancelMoveHS() {
+  movingHsId = null;
+  map.getContainer().style.cursor = '';
+  const hint = document.getElementById('move-hs-hint');
+  if (hint) hint.remove();
 }
 
 // ═══════════════════════════════════════════
