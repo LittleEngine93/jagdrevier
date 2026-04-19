@@ -2723,72 +2723,55 @@ function drawSchussrichtungen() {
 //  GPS STANDORT
 // ═══════════════════════════════════════════
 const locationLayer = L.layerGroup().addTo(map);
-let locateMode = false;
 let locateWatchId = null;
-let locationMarker = null;
+let lastKnownPos = null; // { lat, lng } – immer aktuell, auch ohne Button
 
-function toggleLocate() {
-  locateMode = !locateMode;
-  document.getElementById('btn-locate').classList.toggle('active', locateMode);
-  if (locateMode) {
-    startLocate();
-  } else {
-    stopLocate();
-  }
-}
-
-function startLocate() {
-  if (!navigator.geolocation) {
-    alert('GPS wird auf diesem Gerät nicht unterstützt.');
-    locateMode = false;
-    document.getElementById('btn-locate').classList.remove('active');
-    return;
-  }
+// GPS läuft immer im Hintergrund, Karte bewegt sich NICHT automatisch
+function startLocateBackground() {
+  if (!navigator.geolocation) return;
   locateWatchId = navigator.geolocation.watchPosition(
     pos => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
+      lastKnownPos = { lat, lng };
       locationLayer.clearLayers();
-      // Accuracy circle
+      // Genauigkeitskreis
       if (pos.coords.accuracy) {
         L.circle([lat, lng], {
           radius: pos.coords.accuracy,
-          color: '#4895ef',
-          weight: 1,
-          opacity: 0.4,
-          fillColor: '#4895ef',
-          fillOpacity: 0.08
+          color: '#4895ef', weight: 1, opacity: 0.4,
+          fillColor: '#4895ef', fillOpacity: 0.08
         }).addTo(locationLayer);
       }
-      // Position dot
+      // Standort-Punkt
       const icon = L.divIcon({
         html: '<div class="location-dot"></div>',
-        className: '',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
+        className: '', iconSize: [18, 18], iconAnchor: [9, 9]
       });
-      locationMarker = L.marker([lat, lng], { icon }).addTo(locationLayer);
-      // Center map on first fix
-      if (!locationMarker._centered) {
-        map.setView([lat, lng], Math.max(map.getZoom(), 15));
-        locationMarker._centered = true;
-      }
+      L.marker([lat, lng], { icon }).addTo(locationLayer);
     },
-    err => {
-      console.warn('GPS Fehler:', err.message);
-      if (err.code === 1) alert('Bitte GPS-Zugriff erlauben.');
-    },
-    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+    err => { console.warn('GPS Fehler:', err.message); },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
   );
 }
 
-function stopLocate() {
-  if (locateWatchId !== null) {
-    navigator.geolocation.clearWatch(locateWatchId);
-    locateWatchId = null;
+// Button: einmalig zur aktuellen Position zentrieren, Zoom bleibt anpassbar
+function toggleLocate() {
+  if (!lastKnownPos) {
+    // Noch kein Fix – einmalige Abfrage als Fallback
+    if (!navigator.geolocation) { alert('GPS wird nicht unterstützt.'); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        lastKnownPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        map.setView([lastKnownPos.lat, lastKnownPos.lng], Math.max(map.getZoom(), 15));
+      },
+      err => { if (err.code === 1) alert('Bitte GPS-Zugriff erlauben.'); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+    return;
   }
-  locationLayer.clearLayers();
-  locationMarker = null;
+  // Karte auf letzten bekannten Standort zentrieren, Zoom unverändert
+  map.setView([lastKnownPos.lat, lastKnownPos.lng], Math.max(map.getZoom(), 15));
 }
 
 // ═══════════════════════════════════════════
@@ -4110,6 +4093,8 @@ function applyLayerFilter() {
   renderPirschwege();
   renderZentrum();
   flyToZentrum(getActiveRev());
+  // GPS automatisch im Hintergrund starten (Punkt anzeigen, Karte bewegt sich nicht)
+  startLocateBackground();
 
   // Realtime sync: refresh when another user makes changes
     // ── REVIERPOST ──
