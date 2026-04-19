@@ -877,11 +877,12 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 <!-- FILTER BUTTON -->
 <div id="filter-btn" onclick="toggleFilter()" style="
   position:fixed; bottom:140px; right:10px; z-index:1201;
-  width:40px; height:40px; border-radius:50%;
-  background:var(--bg2); border:1px solid var(--border2);
+  width:44px; height:44px; border-radius:12px;
+  background:rgba(10,10,10,0.82); border:1px solid var(--border2);
   display:flex; align-items:center; justify-content:center;
   cursor:pointer; font-size:16px;
   box-shadow:0 2px 12px rgba(0,0,0,0.5);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
   transition: border-color 0.15s;
 " title="Layer Filter"><svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
   <line x1="2" y1="4" x2="16" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -907,8 +908,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
       <label class="filter-row" style="font-size:10px;"><input type="checkbox" id="fl-typ-kein" checked onchange="applyLayerFilter()"><span>▪ Kein Typ</span></label>
     </div>
     <label class="filter-row"><input type="checkbox" id="fl-anblick" checked onchange="applyLayerFilter()"><span>Anblick</span></label>
-    <label class="filter-row"><input type="checkbox" id="fl-markierungen" checked onchange="applyLayerFilter()"><span>Markierungen</span></label>
-    <label class="filter-row"><input type="checkbox" id="fl-aufgaben" checked onchange="applyLayerFilter()"><span>Aufgaben</span></label>
+    <label class="filter-row"><input type="checkbox" id="fl-markierungen" onchange="applyLayerFilter()"><span>Markierungen</span></label>
+    <label class="filter-row"><input type="checkbox" id="fl-aufgaben" onchange="applyLayerFilter()"><span>Aufgaben</span></label>
     <label class="filter-row"><input type="checkbox" id="fl-grenzen" checked onchange="applyLayerFilter()"><span>Reviergrenzen</span></label>
     <label class="filter-row"><input type="checkbox" id="fl-pirschwege" checked onchange="applyLayerFilter()"><span>Pirschwege</span></label>
     <label class="filter-row"><input type="checkbox" id="fl-schuss" checked onchange="applyLayerFilter()"><span>Schussrichtungen</span></label>
@@ -3049,7 +3050,7 @@ async function fetchSun() {
 // ═══════════════════════════════════════════
 //  AUFGABEN
 // ═══════════════════════════════════════════
-const aufgabenLayer = L.layerGroup().addTo(map);
+const aufgabenLayer = L.layerGroup(); // nicht beim Start zur Karte hinzufügen
 let aufgabenMode = false;
 
 function toggleAufgaben() {
@@ -3268,7 +3269,7 @@ function flyToZentrum(rev) {
 // ═══════════════════════════════════════════
 //  MARKIERUNGEN
 // ═══════════════════════════════════════════
-const markierungenLayer = L.layerGroup().addTo(map);
+const markierungenLayer = L.layerGroup(); // nicht beim Start zur Karte hinzufügen
 let markierungenMode = false;
 let activeMarkierungTyp = null;
 
