@@ -3721,17 +3721,16 @@ function updateWeatherPanel(dirs, speeds, codes, idx, times, temps, precip_prob,
     const hSpd   = Math.round(speeds[hi]);
     const block  = document.createElement('div');
     block.style.cssText = 'flex-shrink:0;width:58px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;background:rgba(255,255,255,0.06);border-radius:10px;';
-    block.innerHTML = \`
-      <span style="font-size:10px;color:var(--text3);font-family:'SF Mono',ui-monospace,monospace;white-space:nowrap;">\${hTime}</span>
-      \${weatherSVG_small(codes[hi])}
-      <span style="font-size:14px;font-weight:600;color:#fff;">\${hTemp}</span>
-      \${hPrec ? '<span style="font-size:10px;color:#4895ef;">' + hPrec + '</span>' : '<span style="font-size:10px;color:transparent;">0%</span>'}
-      <svg width="12" height="12" viewBox="0 0 20 20" style="transform:rotate(\${hArrow}deg);flex-shrink:0;opacity:0.7;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-      </svg>
-      <span style="font-size:10px;color:var(--text3);">\${hSpd}</span>
-    \`;
+    block.innerHTML =
+      '<span style="font-size:10px;color:var(--text3);font-family:\'SF Mono\',ui-monospace,monospace;white-space:nowrap;">' + hTime + '</span>' +
+      weatherSVG_small(codes[hi]) +
+      '<span style="font-size:14px;font-weight:600;color:#fff;">' + hTemp + '</span>' +
+      (hPrec ? '<span style="font-size:10px;color:#4895ef;">' + hPrec + '</span>' : '<span style="font-size:10px;color:transparent;">0%</span>') +
+      '<svg width="12" height="12" viewBox="0 0 20 20" style="transform:rotate(' + hArrow + 'deg);flex-shrink:0;opacity:0.7;">' +
+        '<line x1="10" y1="17" x2="10" y2="4" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<polyline points="6,8 10,2 14,8" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '</svg>' +
+      '<span style="font-size:10px;color:var(--text3);">' + hSpd + '</span>';
     hourlyEl.appendChild(block);
   }
 
@@ -3748,18 +3747,17 @@ function updateWeatherPanel(dirs, speeds, codes, idx, times, temps, precip_prob,
       const dPre  = daily.precipitation_sum[di] > 0 ? daily.precipitation_sum[di].toFixed(1) + ' mm' : '';
       const row   = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.04);border-radius:10px;gap:10px;';
-      row.innerHTML = \`
-        <span style="font-size:13px;font-weight:500;color:#fff;width:44px;flex-shrink:0;">\${dName}</span>
-        <span style="flex-shrink:0;">\${weatherSVG_small(dCode)}</span>
-        \${dPre ? '<span style="font-size:10px;color:#4895ef;flex:1;">' + dPre + '</span>' : '<span style="flex:1;"></span>'}
-        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-          <span style="font-size:13px;color:var(--text3);">\${dMin}°</span>
-          <div style="width:60px;height:4px;border-radius:2px;background:var(--border2);overflow:hidden;">
-            <div style="height:100%;background:linear-gradient(to right,#4895ef,var(--accent));border-radius:2px;width:100%;"></div>
-          </div>
-          <span style="font-size:13px;font-weight:600;color:#fff;">\${dMax}°</span>
-        </div>
-      \`;
+      row.innerHTML =
+        '<span style="font-size:13px;font-weight:500;color:#fff;width:44px;flex-shrink:0;">' + dName + '</span>' +
+        '<span style="flex-shrink:0;">' + weatherSVG_small(dCode) + '</span>' +
+        (dPre ? '<span style="font-size:10px;color:#4895ef;flex:1;">' + dPre + '</span>' : '<span style="flex:1;"></span>') +
+        '<div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">' +
+          '<span style="font-size:13px;color:var(--text3);">' + dMin + '°</span>' +
+          '<div style="width:60px;height:4px;border-radius:2px;background:var(--border2);overflow:hidden;">' +
+            '<div style="height:100%;background:linear-gradient(to right,#4895ef,var(--accent));border-radius:2px;width:100%;"></div>' +
+          '</div>' +
+          '<span style="font-size:13px;font-weight:600;color:#fff;">' + dMax + '°</span>' +
+        '</div>';
       dailyEl.appendChild(row);
     });
   }
