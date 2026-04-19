@@ -396,7 +396,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 /* ── PRINT ── */
 @media print {
   header, #controls-wrapper, #revier-bar, .stats-bar,
-  #legend-btn, #legend-panel, #filter-btn, #filter-panel,
+  #filter-btn, #filter-panel,
   #weather-btn, #weather-panel, #jagdzeiten-btn, #jagdzeiten-panel,
   #chat-btn, #chat-panel, #impressum-overlay,
   .leaflet-control-container, .leaflet-control,
@@ -564,21 +564,70 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   #draw-panel { min-width: 180px; right: 8px; bottom: 16px; padding: 10px; }
   #pirsch-panel { right: 8px; bottom: 16px; }
   #wind-panel { bottom: 16px; padding: 6px 8px; }
-  #weather-btn { bottom: 16px; }
-  #weather-panel { bottom: 64px; right: 8px; width: calc(100vw - 16px); }
-  #filter-btn { bottom: 110px; }
-  #filter-panel { bottom: 110px; right: 60px; }
-  #legend-btn { bottom: 64px; }
-  #legend-panel { bottom: 64px; right: 60px; }
-  #chat-btn { bottom: 156px; }
-  #chat-panel { bottom: 204px; right: 8px; width: calc(100vw - 16px); height: 360px; }
-  #jagdzeiten-btn { bottom: 204px; }
-  #jagdzeiten-panel { bottom: 252px; right: 8px; width: calc(100vw - 16px); }
+  /* Floating Buttons auf Mobile ausblenden – werden durch Modal-Menü ersetzt */
+  #weather-btn { display: none !important; }
+  #weather-panel { display: none !important; }
+  #chat-btn { display: none !important; }
+  #chat-panel { display: none !important; }
+  #jagdzeiten-btn { display: none !important; }
+  #jagdzeiten-panel { display: none !important; }
+  /* Filter & Legende bleiben sichtbar */
+  #filter-btn { bottom: 64px; }
+  #filter-panel { bottom: 64px; right: 60px; }
 
   .legend { bottom: 16px; padding: 5px 7px; }
   .legend-title { font-size: 7px; }
   .legend-row span { font-size: 8px; }
 }
+
+/* ── ZENTRIERTE MODALS (Wetter / Jagdzeiten / Revierpost) ── */
+.center-modal-overlay {
+  position: fixed; inset: 0; z-index: 3500;
+  background: rgba(0,0,0,0.72);
+  display: none; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.center-modal-overlay.show { display: flex; }
+.center-modal-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 82vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+  animation: modalSlideUp 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.center-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border2);
+  flex-shrink: 0;
+}
+.center-modal-title {
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  font-family: 'SF Mono', ui-monospace, monospace;
+  letter-spacing: 0.07em; text-transform: uppercase;
+}
+.center-modal-close {
+  background: transparent; border: none;
+  color: var(--text3); font-size: 20px;
+  cursor: pointer; padding: 0 2px; line-height: 1;
+  transition: color 0.15s;
+}
+.center-modal-close:hover { color: var(--text); }
+.center-modal-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
 </style>
 </head>
 <body>
@@ -703,6 +752,15 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <div class="mm-row">
       <button onclick="toggleExportMenu();closeMobileMenu()">↓ Export</button>
       <button onclick="importData();closeMobileMenu()">↑ Import</button>
+    </div>
+  </div>
+  <div class="mm-divider"></div>
+  <div>
+    <div class="mm-section-label">Info &amp; Kommunikation</div>
+    <div class="mm-row">
+      <button id="mm-btn-wetter"      onclick="openWetterModal();closeMobileMenu()">☁ Wetterdaten</button>
+      <button id="mm-btn-jagdzeiten"  onclick="openJagdzeitenModal();closeMobileMenu()">◫ Jagdzeiten</button>
+      <button id="mm-btn-revierpost"  onclick="openRevierpostModal();closeMobileMenu()">✉ Revierpost</button>
     </div>
   </div>
 </div>
@@ -855,34 +913,6 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
     <label class="filter-row"><input type="checkbox" id="fl-pirschwege" checked onchange="applyLayerFilter()"><span>Pirschwege</span></label>
     <label class="filter-row"><input type="checkbox" id="fl-schuss" checked onchange="applyLayerFilter()"><span>Schussrichtungen</span></label>
   </div>
-</div>
-
-<!-- LEGEND BUTTON -->
-<div id="legend-btn" onclick="toggleLegend()" style="
-  position:fixed; bottom:90px; right:10px; z-index:1200;
-  width:40px; height:40px; border-radius:50%;
-  background:var(--bg2); border:1px solid var(--border2);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-  cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,0.5);
-  transition: border-color 0.15s;
-" title="Legende">
-  <div style="width:16px;height:1.5px;background:#fff;border-radius:1px;"></div>
-  <div style="width:16px;height:1.5px;background:#fff;border-radius:1px;"></div>
-  <div style="width:16px;height:1.5px;background:#fff;border-radius:1px;"></div>
-</div>
-
-<!-- LEGEND PANEL -->
-<div id="legend-panel" style="
-  position:fixed; bottom:90px; right:60px; z-index:1200;
-  background:rgba(10,10,10,0.93); border:1px solid var(--border2);
-  border-radius:5px; padding:10px 12px; font-size:10px; color:var(--text2);
-  display:none;
-">
-  <div class="legend-title" style="margin-bottom:6px;">ABSCHÜSSE</div>
-  <div class="legend-row" style="margin-bottom:3px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:1.5px dashed #ffffff;flex-shrink:0;"></div><span style="font-size:9px;">0</span></div>
-  <div class="legend-row" style="margin-bottom:3px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #52b788;flex-shrink:0;"></div><span style="font-size:9px;">1–2</span></div>
-  <div class="legend-row" style="margin-bottom:3px;"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #f5c518;flex-shrink:0;"></div><span style="font-size:9px;">3–5</span></div>
-  <div class="legend-row"><div style="width:14px;height:14px;border-radius:50%;background:#111;border:2.5px solid #e63946;flex-shrink:0;"></div><span style="font-size:9px;">6+</span></div>
 </div>
 
 <!-- DRAW PANEL -->
@@ -1121,6 +1151,91 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   </div>
 </div>
 
+<!-- WETTER MODAL (zentriert) -->
+<div id="wetter-modal" class="center-modal-overlay">
+  <div class="center-modal-box">
+    <div class="center-modal-header">
+      <span class="center-modal-title">☁ Wetterdaten</span>
+      <button class="center-modal-close" onclick="closeWetterModal()">✕</button>
+    </div>
+    <div class="center-modal-body">
+      <!-- Current weather -->
+      <div style="padding:16px 18px;border-bottom:1px solid var(--border2);">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-family:'SF Mono',ui-monospace,monospace;">Jetzt · Dammersbach</div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div id="wm-current-icon" style="flex-shrink:0;"></div>
+          <div>
+            <div id="wm-current-temp" style="font-size:28px;font-weight:700;color:#fff;line-height:1;">—°</div>
+            <div id="wm-current-desc" style="font-size:11px;color:var(--text2);margin-top:2px;">—</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+              <svg id="wm-wind-arrow" width="18" height="18" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;flex-shrink:0;">
+                <line x1="10" y1="17" x2="10" y2="4" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+                <polyline points="6,8 10,2 14,8" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+              <span id="wm-wind-label" style="font-size:13px;font-weight:700;color:#fff;">—</span>
+            </div>
+            <div id="wm-sun" style="font-size:10px;color:var(--text2);margin-top:4px;">○ — · ● —</div>
+          </div>
+        </div>
+      </div>
+      <!-- 6h forecast -->
+      <div style="padding:12px 14px;">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-family:'SF Mono',ui-monospace,monospace;">Nächste 6 Stunden</div>
+        <div id="wm-hours" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JAGDZEITEN MODAL (zentriert) -->
+<div id="jagdzeiten-modal" class="center-modal-overlay">
+  <div class="center-modal-box">
+    <div class="center-modal-header">
+      <span class="center-modal-title">◫ Jagdzeiten Hessen</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="jagdzeiten-modal-monat" style="font-size:10px;color:var(--text3);font-family:'SF Mono',ui-monospace,monospace;"></span>
+        <button class="center-modal-close" onclick="closeJagdzeitenModal()">✕</button>
+      </div>
+    </div>
+    <div class="center-modal-body" style="padding:14px 16px;">
+      <div id="jagdzeiten-modal-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIERPOST MODAL (zentriert) -->
+<div id="revierpost-modal" class="center-modal-overlay">
+  <div class="center-modal-box" style="max-height:75vh;">
+    <div class="center-modal-header">
+      <span class="center-modal-title">✉ Revierpost</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="revierpost-modal-rev" style="font-size:10px;color:var(--text3);"></span>
+        <button class="center-modal-close" onclick="closeRevierpostModal()">✕</button>
+      </div>
+    </div>
+    <div id="revierpost-modal-messages" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-height:120px;max-height:calc(75vh - 160px);"></div>
+    <div style="padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;">
+      <input id="revierpost-modal-von" type="text" placeholder="Dein Name..." style="
+        width:100%;background:var(--bg3);color:var(--text);
+        border:1px solid var(--border2);border-radius:6px;
+        padding:7px 10px;font-size:12px;outline:none;margin-bottom:6px;
+        font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
+      ">
+      <div style="display:flex;gap:6px;">
+        <input id="revierpost-modal-text" type="text" placeholder="Nachricht..." style="
+          flex:1;background:var(--bg3);color:var(--text);
+          border:1px solid var(--border2);border-radius:6px;
+          padding:7px 10px;font-size:12px;outline:none;
+          font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
+        " onkeydown="if(event.key==='Enter')sendRevierpostModal()">
+        <button onclick="sendRevierpostModal()" style="padding:7px 12px;border-radius:6px;background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;font-size:13px;flex-shrink:0;">↑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- IMPRESSUM MODAL -->
 <div id="impressum-overlay" style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;">
   <div style="
@@ -1267,6 +1382,121 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 // ═══════════════════════════════════════════
 //  SUPABASE
 // ═══════════════════════════════════════════
+
+
+// ═══════════════════════════════════════════
+//  ZENTRALE MODALS (Wetter / Jagdzeiten / Revierpost)
+// ═══════════════════════════════════════════
+
+// ── WETTER MODAL ──
+function openWetterModal() {
+  document.getElementById('wetter-modal').classList.add('show');
+  // Wetterdaten aus dem bestehenden Panel spiegeln
+  const copyIds = [
+    ['wp-current-icon','wm-current-icon'],
+    ['wp-current-temp','wm-current-temp'],
+    ['wp-current-desc','wm-current-desc'],
+    ['wp-sun','wm-sun'],
+    ['wp-hours','wm-hours']
+  ];
+  copyIds.forEach(([src, dst]) => {
+    const s = document.getElementById(src);
+    const d = document.getElementById(dst);
+    if (s && d) d.innerHTML = s.innerHTML;
+  });
+  // Windpfeil
+  const srcArrow = document.getElementById('wp-wind-arrow');
+  const dstArrow = document.getElementById('wm-wind-arrow');
+  if (srcArrow && dstArrow) {
+    dstArrow.style.transform = srcArrow.style.transform;
+  }
+  const srcLabel = document.getElementById('wp-wind-label');
+  const dstLabel = document.getElementById('wm-wind-label');
+  if (srcLabel && dstLabel) dstLabel.textContent = srcLabel.textContent;
+  // Wetterdaten laden falls noch nicht geschehen
+  if (typeof fetchWeather === 'function') fetchWeather();
+}
+function closeWetterModal() {
+  document.getElementById('wetter-modal').classList.remove('show');
+}
+
+// ── JAGDZEITEN MODAL ──
+function openJagdzeitenModal() {
+  document.getElementById('jagdzeiten-modal').classList.add('show');
+  // Monat-Label
+  const srcMonat = document.getElementById('jagdzeiten-monat');
+  const dstMonat = document.getElementById('jagdzeiten-modal-monat');
+  if (srcMonat && dstMonat) dstMonat.textContent = srcMonat.textContent;
+  // Body rendern
+  if (typeof renderJagdzeiten === 'function') {
+    renderJagdzeiten();
+    const srcBody = document.getElementById('jagdzeiten-body');
+    const dstBody = document.getElementById('jagdzeiten-modal-body');
+    if (srcBody && dstBody) dstBody.innerHTML = srcBody.innerHTML;
+  }
+}
+function closeJagdzeitenModal() {
+  document.getElementById('jagdzeiten-modal').classList.remove('show');
+}
+
+// ── REVIERPOST MODAL ──
+function openRevierpostModal() {
+  const modal = document.getElementById('revierpost-modal');
+  modal.classList.add('show');
+  // Reviername
+  const revName = document.getElementById('chat-rev-name');
+  const modalRevName = document.getElementById('revierpost-modal-rev');
+  if (revName && modalRevName) modalRevName.textContent = revName.textContent;
+  // Name aus bestehendem Input übernehmen
+  const srcVon = document.getElementById('chat-von');
+  const dstVon = document.getElementById('revierpost-modal-von');
+  if (srcVon && dstVon && srcVon.value) dstVon.value = srcVon.value;
+  // Nachrichten spiegeln
+  syncRevierpostMessages();
+}
+function closeRevierpostModal() {
+  document.getElementById('revierpost-modal').classList.remove('show');
+}
+function syncRevierpostMessages() {
+  const src = document.getElementById('chat-messages');
+  const dst = document.getElementById('revierpost-modal-messages');
+  if (src && dst) {
+    dst.innerHTML = src.innerHTML;
+    dst.scrollTop = dst.scrollHeight;
+  }
+}
+function sendRevierpostModal() {
+  const vonEl  = document.getElementById('revierpost-modal-von');
+  const textEl = document.getElementById('revierpost-modal-text');
+  if (!vonEl || !textEl) return;
+  // Name in originales Feld übertragen
+  const srcVon = document.getElementById('chat-von');
+  if (srcVon) srcVon.value = vonEl.value;
+  const srcText = document.getElementById('chat-text');
+  if (srcText) {
+    srcText.value = textEl.value;
+    textEl.value = '';
+  }
+  // Originale sendChatMessage aufrufen
+  if (typeof sendChatMessage === 'function') {
+    sendChatMessage();
+    setTimeout(syncRevierpostMessages, 600);
+  }
+}
+
+// Schließen bei Klick auf Overlay-Hintergrund
+document.addEventListener('DOMContentLoaded', function() {
+  ['wetter-modal','jagdzeiten-modal','revierpost-modal'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('click', function(e) {
+        if (e.target === el) {
+          el.classList.remove('show');
+        }
+      });
+    }
+  });
+});
 
 // ═══════════════════════════════════════════
 //  MOBILE MENU
@@ -3776,13 +4006,6 @@ function applyLayerFilter() {
 // ═══════════════════════════════════════════
 //  LEGEND TOGGLE
 // ═══════════════════════════════════════════
-let legendVisible = false;
-function toggleLegend() {
-  legendVisible = !legendVisible;
-  document.getElementById('legend-panel').style.display = legendVisible ? 'block' : 'none';
-  document.getElementById('legend-btn').style.borderColor = legendVisible ? 'var(--accent)' : 'var(--border2)';
-  document.getElementById('legend-btn').style.background = legendVisible ? 'var(--bg3)' : 'var(--bg2)';
-}
 
 // ═══════════════════════════════════════════
 //  INIT
@@ -3842,6 +4065,8 @@ function toggleLegend() {
           return '<div class="chat-msg"><div class="chat-von">' + m.von + '</div><div>' + m.text + '</div><div class="chat-zeit">' + zeit + '</div></div>';
         }).join('');
     container.scrollTop = container.scrollHeight;
+    // Sync mit Modal falls geöffnet
+    if (typeof syncRevierpostMessages === 'function') syncRevierpostMessages();
   }
 
   window.sendChatMessage = async function() {
