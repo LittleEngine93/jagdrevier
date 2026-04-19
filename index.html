@@ -628,6 +628,20 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   flex: 1;
 }
 
+
+/* ── GPS NAVIGATIONS-MODUS Puls ── */
+@keyframes gps-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(72,149,239,0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(72,149,239,0); }
+  100% { box-shadow: 0 0 0 0 rgba(72,149,239,0); }
+}
+.gps-navigating {
+  animation: gps-pulse 1.5s infinite !important;
+  background: #4895ef !important;
+  color: #000 !important;
+  border-color: #4895ef !important;
+}
+
 </style>
 </head>
 <body>
@@ -2723,33 +2737,72 @@ function drawSchussrichtungen() {
 //  GPS STANDORT
 // ═══════════════════════════════════════════
 const locationLayer = L.layerGroup().addTo(map);
-let locateMode = false;
+// ── GPS STANDORT ──
+// locateState: 0 = nur anzeigen (auto), 1 = einmalig zentrieren, 2 = Navigation (folgen)
+let locateState = 0;
 let locateWatchId = null;
 let locationMarker = null;
+let locateFirstFix = true;
 
-function toggleLocate() {
-  locateMode = !locateMode;
-  document.getElementById('btn-locate').classList.toggle('active', locateMode);
-  if (locateMode) {
-    startLocate();
-  } else {
-    stopLocate();
+function updateLocateBtn() {
+  const btn = document.getElementById('btn-locate');
+  const mmBtn = document.getElementById('mm-btn-locate');
+  [btn, mmBtn].forEach(function(b) {
+    if (!b) return;
+    b.classList.remove('active', 'gps-navigating');
+    b.style.borderColor = '';
+    b.style.color = '';
+  });
+  if (locateState === 0) {
+    // Nur anzeigen → blaue Border als Hinweis GPS ist aktiv
+    [btn, mmBtn].forEach(function(b) {
+      if (!b) return;
+      b.style.borderColor = '#4895ef';
+      b.style.color = '#4895ef';
+    });
+  } else if (locateState === 1) {
+    // Einmalig zentriert → aktiv (orange)
+    [btn, mmBtn].forEach(function(b) { if (b) b.classList.add('active'); });
+  } else if (locateState === 2) {
+    // Navigations-Modus → blaues Pulsieren
+    [btn, mmBtn].forEach(function(b) { if (b) b.classList.add('gps-navigating'); });
   }
 }
 
-function startLocate() {
-  if (!navigator.geolocation) {
-    alert('GPS wird auf diesem Gerät nicht unterstützt.');
-    locateMode = false;
-    document.getElementById('btn-locate').classList.remove('active');
-    return;
+function toggleLocate() {
+  if (locateState === 0) {
+    // 0 → 1: einmalig zentrieren
+    locateState = 1;
+    // Sofort auf aktuellen Standort zentrieren falls schon bekannt
+    if (locationMarker) {
+      const ll = locationMarker.getLatLng();
+      map.setView([ll.lat, ll.lng], map.getZoom());
+    }
+  } else if (locateState === 1) {
+    // 1 → 2: Navigations-Modus (Karte folgt GPS)
+    locateState = 2;
+    if (locationMarker) {
+      const ll = locationMarker.getLatLng();
+      map.setView([ll.lat, ll.lng], map.getZoom());
+    }
+  } else {
+    // 2 → 0: zurück zu nur anzeigen
+    locateState = 0;
   }
+  updateLocateBtn();
+}
+
+function startLocateBackground() {
+  // Wird beim App-Start aufgerufen – GPS immer im Hintergrund aktiv
+  if (!navigator.geolocation) return;
+  if (locateWatchId !== null) return;
+  locateFirstFix = true;
   locateWatchId = navigator.geolocation.watchPosition(
     pos => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
       locationLayer.clearLayers();
-      // Accuracy circle
+      // Genauigkeitskreis
       if (pos.coords.accuracy) {
         L.circle([lat, lng], {
           radius: pos.coords.accuracy,
@@ -2760,7 +2813,7 @@ function startLocate() {
           fillOpacity: 0.08
         }).addTo(locationLayer);
       }
-      // Position dot
+      // Standort-Punkt
       const icon = L.divIcon({
         html: '<div class="location-dot"></div>',
         className: '',
@@ -2768,17 +2821,20 @@ function startLocate() {
         iconAnchor: [9, 9]
       });
       locationMarker = L.marker([lat, lng], { icon }).addTo(locationLayer);
-      // Center map on first fix
-      if (!locationMarker._centered) {
-        map.setView([lat, lng], Math.max(map.getZoom(), 15));
-        locationMarker._centered = true;
+      // Navigations-Modus: Karte folgt
+      if (locateState === 2) {
+        map.setView([lat, lng], map.getZoom());
+      }
+      // Erster Fix im Modus 1: einmalig zentrieren
+      if (locateState === 1 && locateFirstFix) {
+        map.setView([lat, lng], map.getZoom());
+        locateFirstFix = false;
       }
     },
     err => {
       console.warn('GPS Fehler:', err.message);
-      if (err.code === 1) alert('Bitte GPS-Zugriff erlauben.');
     },
-    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+    { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
   );
 }
 
@@ -2789,6 +2845,8 @@ function stopLocate() {
   }
   locationLayer.clearLayers();
   locationMarker = null;
+  locateState = 0;
+  updateLocateBtn();
 }
 
 // ═══════════════════════════════════════════
@@ -4105,6 +4163,9 @@ function applyLayerFilter() {
   fetchWind();
   fetchSun();
   updateZoomDisplay();
+  // GPS automatisch im Hintergrund starten
+  startLocateBackground();
+  updateLocateBtn();
   renderAufgaben();
   renderMarkierungen();
   renderPirschwege();
