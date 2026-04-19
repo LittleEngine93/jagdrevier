@@ -1153,38 +1153,69 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 <!-- WETTER MODAL (zentriert) -->
 <div id="wetter-modal" class="center-modal-overlay">
-  <div class="center-modal-box">
+  <div class="center-modal-box" style="max-width:400px;">
     <div class="center-modal-header">
-      <span class="center-modal-title">☁ Wetterdaten</span>
+      <div>
+        <div class="center-modal-title">☁ Wetterdaten</div>
+        <div id="wm-location" style="font-size:10px;color:var(--text3);margin-top:2px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;">Dammersbach</div>
+      </div>
       <button class="center-modal-close" onclick="closeWetterModal()">✕</button>
     </div>
     <div class="center-modal-body">
-      <!-- Current weather -->
-      <div style="padding:16px 18px;border-bottom:1px solid var(--border2);">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-family:'SF Mono',ui-monospace,monospace;">Jetzt · Dammersbach</div>
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div id="wm-current-icon" style="flex-shrink:0;"></div>
-          <div>
-            <div id="wm-current-temp" style="font-size:28px;font-weight:700;color:#fff;line-height:1;">—°</div>
-            <div id="wm-current-desc" style="font-size:11px;color:var(--text2);margin-top:2px;">—</div>
+
+      <!-- HERO: Aktuelle Temperatur -->
+      <div style="padding:20px 20px 0;text-align:center;">
+        <div id="wm-hero-icon" style="display:flex;justify-content:center;margin-bottom:6px;"></div>
+        <div id="wm-hero-temp" style="font-size:64px;font-weight:200;color:#fff;line-height:1;letter-spacing:-2px;">—°</div>
+        <div id="wm-hero-desc" style="font-size:16px;color:var(--text2);margin-top:4px;font-weight:400;">—</div>
+        <div id="wm-hero-range" style="font-size:13px;color:var(--text3);margin-top:4px;">H:—° T:—°</div>
+      </div>
+
+      <!-- AKTUELLE DETAILS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:16px 16px 0;">
+        <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-family:'SF Mono',ui-monospace,monospace;">🌅 Sonne</div>
+          <div id="wm-sunrise" style="font-size:15px;font-weight:600;color:#fff;">—</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">Aufgang</div>
+          <div id="wm-sunset" style="font-size:15px;font-weight:600;color:#fff;margin-top:6px;">—</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">Untergang</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-family:'SF Mono',ui-monospace,monospace;">💨 Wind</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+            <svg id="wm-wind-arrow" width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;flex-shrink:0;">
+              <line x1="10" y1="17" x2="10" y2="4" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+              <polyline points="6,8 10,2 14,8" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <span id="wm-wind-speed" style="font-size:20px;font-weight:600;color:#fff;">—</span>
+            <span style="font-size:11px;color:var(--text3);">km/h</span>
           </div>
-          <div style="margin-left:auto;text-align:right;">
-            <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
-              <svg id="wm-wind-arrow" width="18" height="18" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="transition:transform 0.5s;flex-shrink:0;">
-                <line x1="10" y1="17" x2="10" y2="4" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
-                <polyline points="6,8 10,2 14,8" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-              </svg>
-              <span id="wm-wind-label" style="font-size:13px;font-weight:700;color:#fff;">—</span>
-            </div>
-            <div id="wm-sun" style="font-size:10px;color:var(--text2);margin-top:4px;">○ — · ● —</div>
-          </div>
+          <div id="wm-wind-dir" style="font-size:11px;color:var(--text3);margin-top:4px;">—</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-family:'SF Mono',ui-monospace,monospace;">🌧 Niederschlag</div>
+          <div id="wm-precip" style="font-size:20px;font-weight:600;color:#fff;">—</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">mm heute</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-family:'SF Mono',ui-monospace,monospace;">💧 Luftfeucht.</div>
+          <div id="wm-humidity" style="font-size:20px;font-weight:600;color:#fff;">—</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">%</div>
         </div>
       </div>
-      <!-- 6h forecast -->
-      <div style="padding:12px 14px;">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-family:'SF Mono',ui-monospace,monospace;">Nächste 6 Stunden</div>
-        <div id="wm-hours" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+
+      <!-- STÜNDLICHE VORSCHAU -->
+      <div style="padding:14px 16px 0;">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;font-family:'SF Mono',ui-monospace,monospace;">Stündliche Vorschau</div>
+        <div id="wm-hourly" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;"></div>
       </div>
+
+      <!-- 7-TAGE VORSCHAU -->
+      <div style="padding:14px 16px 16px;">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;font-family:'SF Mono',ui-monospace,monospace;">7-Tage Vorschau</div>
+        <div id="wm-daily" style="display:flex;flex-direction:column;gap:4px;"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1391,30 +1422,12 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 // ── WETTER MODAL ──
 function openWetterModal() {
   document.getElementById('wetter-modal').classList.add('show');
-  // Wetterdaten aus dem bestehenden Panel spiegeln
-  const copyIds = [
-    ['wp-current-icon','wm-current-icon'],
-    ['wp-current-temp','wm-current-temp'],
-    ['wp-current-desc','wm-current-desc'],
-    ['wp-sun','wm-sun'],
-    ['wp-hours','wm-hours']
-  ];
-  copyIds.forEach(([src, dst]) => {
-    const s = document.getElementById(src);
-    const d = document.getElementById(dst);
-    if (s && d) d.innerHTML = s.innerHTML;
-  });
-  // Windpfeil
-  const srcArrow = document.getElementById('wp-wind-arrow');
-  const dstArrow = document.getElementById('wm-wind-arrow');
-  if (srcArrow && dstArrow) {
-    dstArrow.style.transform = srcArrow.style.transform;
-  }
-  const srcLabel = document.getElementById('wp-wind-label');
-  const dstLabel = document.getElementById('wm-wind-label');
-  if (srcLabel && dstLabel) dstLabel.textContent = srcLabel.textContent;
-  // Wetterdaten laden falls noch nicht geschehen
-  if (typeof fetchWeather === 'function') fetchWeather();
+  // Revier-Name anzeigen
+  const rev = getActiveRev();
+  const locEl = document.getElementById('wm-location');
+  if (locEl && rev) locEl.textContent = rev.name || 'Dammersbach';
+  // Wetterdaten neu laden (frischt Modal direkt auf)
+  if (typeof fetchWind === 'function') fetchWind();
 }
 function closeWetterModal() {
   document.getElementById('wetter-modal').classList.remove('show');
@@ -2966,7 +2979,7 @@ async function fetchWind() {
     const rev = getActiveRev();
     const lat = (rev && rev.zentrum) ? rev.zentrum.lat : 50.6138;
     const lon = (rev && rev.zentrum) ? rev.zentrum.lon : 9.7731;
-    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&hourly=windspeed_10m,winddirection_10m,weathercode&current_weather=true&wind_speed_unit=kmh&forecast_days=3&timezone=auto');
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&hourly=temperature_2m,windspeed_10m,winddirection_10m,weathercode,precipitation_probability,relativehumidity_2m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum&current_weather=true&wind_speed_unit=kmh&forecast_days=7&timezone=auto');
     const json = await res.json();
 
     // Current weather for wind match
@@ -2978,6 +2991,10 @@ async function fetchWind() {
     const speeds = json.hourly.windspeed_10m;
     const dirs = json.hourly.winddirection_10m;
     const codes = json.hourly.weathercode;
+    const temps = json.hourly.temperature_2m || [];
+    const precip_prob = json.hourly.precipitation_probability || [];
+    const humidity = json.hourly.relativehumidity_2m || [];
+    const daily = json.daily || {};
     const nowMs = Date.now();
     let idx = 0, minDiff = Infinity;
     times.forEach((t, i) => {
@@ -2999,7 +3016,7 @@ async function fetchWind() {
       if (labelEl) labelEl.textContent = `${compass} ${spd}`;
       if (wxEl) wxEl.innerHTML = weatherSymbol(codes[i]);
     }
-    updateWeatherPanel(dirs, speeds, codes, idx, times);
+    updateWeatherPanel(dirs, speeds, codes, idx, times, temps, precip_prob, humidity, daily);
 
   } catch(e) {
     [0,1,2,3,4,5].forEach(i => {
@@ -3637,47 +3654,117 @@ function toggleWeatherPanel() {
   document.getElementById('weather-btn').style.borderColor = weatherPanelVisible ? 'var(--accent)' : 'var(--border2)';
 }
 
-function updateWeatherPanel(dirs, speeds, codes, idx, times) {
-  // Current
-  const deg = dirs[idx];
-  const spd = Math.round(speeds[idx]);
+function updateWeatherPanel(dirs, speeds, codes, idx, times, temps, precip_prob, humidity, daily) {
+  const deg   = dirs[idx];
+  const spd   = Math.round(speeds[idx]);
+  const temp  = temps && temps[idx] !== undefined ? Math.round(temps[idx]) : null;
+  const hum   = humidity && humidity[idx] !== undefined ? Math.round(humidity[idx]) : null;
   const compass = degToCompass(deg);
   const arrowDeg = (deg + 180) % 360;
+  const code  = codes[idx];
 
-  document.getElementById('wp-current-icon').innerHTML = weatherSVG_large(codes[idx]);
-  document.getElementById('wp-current-desc').textContent = weatherDesc(codes[idx]);
+  // ── Bestehende kleine Panel-Felder (Header) ──
+  document.getElementById('wp-current-icon').innerHTML = weatherSVG_large(code);
+  document.getElementById('wp-current-desc').textContent = weatherDesc(code);
+  document.getElementById('wp-current-temp').textContent = temp !== null ? temp + '°' : '—°';
   document.getElementById('wp-wind-label').textContent = compass + ' · ' + spd + ' km/h';
   document.getElementById('wp-wind-arrow').style.transform = 'rotate(' + arrowDeg + 'deg)';
-
-  // Sun
-  const rise = document.getElementById('sun-rise').textContent;
-  const set = document.getElementById('sun-set').textContent;
+  const rise = document.getElementById('sun-rise')?.textContent || '—';
+  const set  = document.getElementById('sun-set')?.textContent  || '—';
   document.getElementById('wp-sun').textContent = '○ ' + rise + '  ·  ● ' + set;
 
-  // 6h forecast
-  const hoursEl = document.getElementById('wp-hours');
-  hoursEl.innerHTML = '';
-  for (let i = 0; i < 6; i++) {
+  // ── Neues Modal befüllen ──
+  // Hero
+  document.getElementById('wm-hero-icon').innerHTML = weatherSVG_large(code);
+  document.getElementById('wm-hero-temp').textContent = temp !== null ? temp + '°' : '—°';
+  document.getElementById('wm-hero-desc').textContent = weatherDesc(code);
+
+  // Tages-Hoch/Tief aus daily
+  if (daily && daily.temperature_2m_max && daily.temperature_2m_max[0] !== undefined) {
+    const hi = Math.round(daily.temperature_2m_max[0]);
+    const lo = Math.round(daily.temperature_2m_min[0]);
+    document.getElementById('wm-hero-range').textContent = 'H: ' + hi + '°  T: ' + lo + '°';
+  }
+
+  // Sonne
+  if (daily && daily.sunrise && daily.sunrise[0]) {
+    document.getElementById('wm-sunrise').textContent = daily.sunrise[0].slice(11,16) + ' Uhr';
+    document.getElementById('wm-sunset').textContent  = daily.sunset[0].slice(11,16)  + ' Uhr';
+  } else {
+    document.getElementById('wm-sunrise').textContent = rise + ' Uhr';
+    document.getElementById('wm-sunset').textContent  = set  + ' Uhr';
+  }
+
+  // Wind
+  document.getElementById('wm-wind-arrow').style.transform = 'rotate(' + arrowDeg + 'deg)';
+  document.getElementById('wm-wind-speed').textContent = spd;
+  document.getElementById('wm-wind-dir').textContent = compass + ' (' + deg + '°)';
+
+  // Niederschlag (Tagessumme)
+  const precipVal = (daily && daily.precipitation_sum && daily.precipitation_sum[0] !== undefined)
+    ? daily.precipitation_sum[0].toFixed(1) : '0.0';
+  document.getElementById('wm-precip').textContent = precipVal;
+
+  // Luftfeuchtigkeit
+  document.getElementById('wm-humidity').textContent = hum !== null ? hum : '—';
+
+  // ── Stündliche Vorschau (12h) ──
+  const hourlyEl = document.getElementById('wm-hourly');
+  hourlyEl.innerHTML = '';
+  for (let i = 0; i < 12; i++) {
     const hi = idx + i;
     if (hi >= times.length) break;
-    const label = i === 0 ? 'Jetzt' : '+' + i + 'h';
-    const hDeg = dirs[hi];
-    const hSpd = Math.round(speeds[hi]);
-    const hArrow = (hDeg + 180) % 360;
-    const block = document.createElement('div');
-    block.style.cssText = 'flex:1;min-width:40px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;background:rgba(255,255,255,0.05);border-radius:8px;';
-    block.innerHTML = `
-      <span style="font-size:10px;color:var(--text3);font-family:'SF Mono',ui-monospace,monospace;">${label}</span>
-      ${weatherSVG_small(codes[hi])}
-      <svg width="14" height="14" viewBox="0 0 20 20" style="transform:rotate(${hArrow}deg);flex-shrink:0;">
-        <line x1="10" y1="17" x2="10" y2="4" stroke="#1a3a1a" stroke-width="2.5" stroke-linecap="round"/>
-        <polyline points="6,8 10,2 14,8" fill="none" stroke="#1a3a1a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    const hTime  = i === 0 ? 'Jetzt' : new Date(times[hi]).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+    const hTemp  = temps && temps[hi] !== undefined ? Math.round(temps[hi]) + '°' : '—°';
+    const hPrec  = precip_prob && precip_prob[hi] !== undefined ? precip_prob[hi] + '%' : '';
+    const hArrow = (dirs[hi] + 180) % 360;
+    const hSpd   = Math.round(speeds[hi]);
+    const block  = document.createElement('div');
+    block.style.cssText = 'flex-shrink:0;width:58px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;background:rgba(255,255,255,0.06);border-radius:10px;';
+    block.innerHTML = \`
+      <span style="font-size:10px;color:var(--text3);font-family:'SF Mono',ui-monospace,monospace;white-space:nowrap;">\${hTime}</span>
+      \${weatherSVG_small(codes[hi])}
+      <span style="font-size:14px;font-weight:600;color:#fff;">\${hTemp}</span>
+      \${hPrec ? '<span style="font-size:10px;color:#4895ef;">' + hPrec + '</span>' : '<span style="font-size:10px;color:transparent;">0%</span>'}
+      <svg width="12" height="12" viewBox="0 0 20 20" style="transform:rotate(\${hArrow}deg);flex-shrink:0;opacity:0.7;">
+        <line x1="10" y1="17" x2="10" y2="4" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="6,8 10,2 14,8" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
-      <span style="font-size:11px;font-weight:700;color:#fff;">${hSpd}</span>
-    `;
-    hoursEl.appendChild(block);
+      <span style="font-size:10px;color:var(--text3);">\${hSpd}</span>
+    \`;
+    hourlyEl.appendChild(block);
+  }
+
+  // ── 7-Tage Vorschau ──
+  const dailyEl = document.getElementById('wm-daily');
+  dailyEl.innerHTML = '';
+  if (daily && daily.weathercode) {
+    const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+    daily.weathercode.forEach((dCode, di) => {
+      const dMax  = Math.round(daily.temperature_2m_max[di]);
+      const dMin  = Math.round(daily.temperature_2m_min[di]);
+      const dDate = new Date(daily.sunrise[di]);
+      const dName = di === 0 ? 'Heute' : di === 1 ? 'Morgen' : dayNames[dDate.getDay()];
+      const dPre  = daily.precipitation_sum[di] > 0 ? daily.precipitation_sum[di].toFixed(1) + ' mm' : '';
+      const row   = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.04);border-radius:10px;gap:10px;';
+      row.innerHTML = \`
+        <span style="font-size:13px;font-weight:500;color:#fff;width:44px;flex-shrink:0;">\${dName}</span>
+        <span style="flex-shrink:0;">\${weatherSVG_small(dCode)}</span>
+        \${dPre ? '<span style="font-size:10px;color:#4895ef;flex:1;">' + dPre + '</span>' : '<span style="flex:1;"></span>'}
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <span style="font-size:13px;color:var(--text3);">\${dMin}°</span>
+          <div style="width:60px;height:4px;border-radius:2px;background:var(--border2);overflow:hidden;">
+            <div style="height:100%;background:linear-gradient(to right,#4895ef,var(--accent));border-radius:2px;width:100%;"></div>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#fff;">\${dMax}°</span>
+        </div>
+      \`;
+      dailyEl.appendChild(row);
+    });
   }
 }
+
 
 function weatherDesc(code) {
   if (code === 0) return 'Sonnig';
