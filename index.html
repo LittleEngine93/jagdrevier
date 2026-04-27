@@ -854,6 +854,27 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   </svg>
 </div>
 
+<!-- GPS / STANDORT BUTTON -->
+<div id="gps-btn" onclick="toggleLocate()" style="
+  position:fixed; top:calc(max(env(safe-area-inset-top), 8px) + 120px); right:12px; z-index:1201;
+  width:44px; height:44px; border-radius:12px;
+  background:rgba(10,10,10,0.82); border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  box-shadow:0 2px 12px rgba(0,0,0,0.5);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  transition: border-color 0.15s, color 0.15s;
+  color: var(--text);
+" title="GPS Standort">
+  <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="2"/>
+    <line x1="12" y1="2" x2="12" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <line x1="2" y1="12" x2="6" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+</div>
+
 <!-- FILTER PANEL -->
 <div id="filter-panel" style="
   position:fixed; top:calc(max(env(safe-area-inset-top), 8px) + 64px); right:64px; z-index:1200;
@@ -2695,6 +2716,11 @@ let locationMarker = null;
 function toggleLocate() {
   locateMode = !locateMode;
   document.getElementById('btn-locate').classList.toggle('active', locateMode);
+  const gpsBtn = document.getElementById('gps-btn');
+  if (gpsBtn) {
+    gpsBtn.style.borderColor = locateMode ? 'var(--accent)' : 'var(--border2)';
+    gpsBtn.style.color = locateMode ? 'var(--accent)' : 'var(--text)';
+  }
   if (locateMode) {
     startLocate();
   } else {
@@ -2742,6 +2768,10 @@ function startLocate() {
     err => {
       console.warn('GPS Fehler:', err.message);
       if (err.code === 1) alert('Bitte GPS-Zugriff erlauben.');
+      locateMode = false;
+      document.getElementById('btn-locate').classList.remove('active');
+      const gpsBtn = document.getElementById('gps-btn');
+      if (gpsBtn) { gpsBtn.style.borderColor = 'var(--border2)'; gpsBtn.style.color = 'var(--text)'; }
     },
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
   );
