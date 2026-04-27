@@ -43,11 +43,13 @@ header {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.06);
-  padding: 8px 20px;
+  padding: 8px 14px;
   display: flex; align-items: center; justify-content: flex-start;
-  height: 80px;
-  position: fixed; top: 12px; left: 12px; right: 12px; z-index: 1100;
-  border-radius: 10px;
+  height: 56px;
+  position: fixed;
+  top: max(env(safe-area-inset-top), 8px);
+  left: 8px; right: 8px; z-index: 1100;
+  border-radius: 12px;
 }
 .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .header-right { display: flex; align-items: center; gap: 20px; margin-left: 80px; overflow-x: auto; flex-wrap: nowrap; flex-shrink: 1; min-width: 0; flex: 1; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; font-weight: 700; color: #1a3a1a; }
@@ -147,16 +149,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 .ldot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── STATS BAR ── */
-.stats-bar {
-  background: rgba(10,10,10,0.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(255,255,255,0.06);
-  padding: 0 20px; display: flex; gap: 0; font-size: 10px;
-  color: var(--text3); font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace;
-  height: 32px; align-items: center;
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 1100;
-}
+.stats-bar { display: none !important; }
 .stats-bar span { padding: 0 14px; border-right: 1px solid var(--border); height: 100%; display: flex; align-items: center; }
 .stats-bar span:first-child { padding-left: 0; }
 .stats-bar span b { color: var(--accent); font-weight: 500; margin-left: 4px; }
@@ -433,13 +426,43 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 #controls::-webkit-scrollbar-thumb,
 #controls2::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
 
-.leaflet-top { top: 164px !important; }
+.leaflet-top { top: calc(max(env(safe-area-inset-top), 8px) + 120px) !important; }
 .leaflet-control-zoom { margin-top: 0 !important; }
 
 /* ── BURGER BUTTON ── */
 #burger-btn {
-  display: none;
+  display: flex;
+  position: fixed;
+  top: calc(max(env(safe-area-inset-top), 8px) + 64px);
+  left: 12px;
+  z-index: 1300;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(10,10,10,0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border2);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
 }
+#burger-btn span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  transform-origin: center;
+}
+#burger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+#burger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+#burger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 /* ── MOBILE MENU ── */
 #mobile-menu {
@@ -451,7 +474,8 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border2);
-  padding: 72px 14px 16px;
+  padding-top: calc(max(env(safe-area-inset-top), 8px) + 120px);
+  padding-left: 14px; padding-right: 14px; padding-bottom: 16px;
   flex-direction: column;
   gap: 14px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.8);
@@ -492,92 +516,21 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
   margin: 2px 0;
 }
 
-/* ── PORTRAIT MOBILE ── */
-@media (max-width: 480px) and (orientation: portrait) {
 
-  /* Header: safe-area-inset-top berücksichtigt Notch/Dynamic Island */
-  header {
-    height: 50px;
-    padding: 0 14px;
-    top: max(env(safe-area-inset-top), 8px);
-    left: 8px; right: 8px;
-  }
-  .logo { font-size: 12px; }
+/* ── FLOATING BUTTONS: always hidden (use burger menu instead) ── */
+#weather-btn, #chat-btn, #jagdzeiten-btn { display: none !important; }
+
+
+/* ── RESPONSIVE: alle Bildschirmgrößen ── */
+@media (max-width: 600px) {
   .logo span { display: none; }
   #coord-display { display: none; }
   #wind-indicator { display: none !important; }
   #weather-indicator { display: none !important; }
   #sun-indicator { display: none; }
-
-  /* Desktop Controls ausblenden */
-  #controls-wrapper { display: none !important; }
-
-  /* Stats-Bar ausblenden */
-  .stats-bar { display: none !important; }
-
-  /* Burger-Button: unterhalb des Headers, linke Seite */
-  #burger-btn {
-    display: flex;
-    position: fixed;
-    /* top = safe-area + Header-Höhe + kleiner Abstand */
-    top: calc(max(env(safe-area-inset-top), 8px) + 58px);
-    left: 12px;
-    z-index: 1300;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: rgba(10,10,10,0.82);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border2);
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-direction: column;
-    gap: 5px;
-    padding: 0;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
-  }
-  #burger-btn span {
-    display: block;
-    width: 18px;
-    height: 2px;
-    background: var(--text);
-    border-radius: 2px;
-    transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
-    transform-origin: center;
-  }
-  #burger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-  #burger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-  #burger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-  /* Mobile Menu: ebenfalls safe-area berücksichtigen */
-  #mobile-menu {
-    padding-top: calc(max(env(safe-area-inset-top), 8px) + 120px);
-  }
-
-  /* Leaflet Zoom-Controls: unterhalb Burger-Button */
-  .leaflet-top { top: calc(max(env(safe-area-inset-top), 8px) + 116px) !important; }
-
-  /* Panels bottom-Abstand anpassen (keine stats-bar mehr) */
-  #add-panel { min-width: 180px; right: 8px; bottom: 16px; padding: 10px; }
-  #draw-panel { min-width: 180px; right: 8px; bottom: 16px; padding: 10px; }
-  #pirsch-panel { right: 8px; bottom: 16px; }
-  #wind-panel { bottom: 16px; padding: 6px 8px; }
-  /* Floating Buttons auf Mobile ausblenden – werden durch Modal-Menü ersetzt */
-  #weather-btn { display: none !important; }
-  #weather-panel { display: none !important; }
-  #chat-btn { display: none !important; }
-  #chat-panel { display: none !important; }
-  #jagdzeiten-btn { display: none !important; }
-  #jagdzeiten-panel { display: none !important; }
-  /* Filter & Legende bleiben sichtbar */
-  #filter-panel { top:calc(max(env(safe-area-inset-top), 8px) + 58px); right:64px; }
-
-  .legend { bottom: 16px; padding: 5px 7px; }
-  .legend-title { font-size: 7px; }
-  .legend-row span { font-size: 8px; }
+  .header-right { display: none; }
 }
+
 
 /* ── ZENTRIERTE MODALS (Wetter / Jagdzeiten / Revierpost) ── */
 .center-modal-overlay {
@@ -765,7 +718,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 </div>
 
 <!-- CONTROLS WRAPPER -->
-<div id="controls-wrapper" style="position:fixed;top:102px;left:12px;right:12px;z-index:1100;display:flex;gap:20px;align-items:flex-start;">
+<div id="controls-wrapper" style="display:none!important;">
 
 <!-- CONTROLS: KARTE -->
 <div id="controls">
@@ -875,7 +828,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 <!-- FILTER BUTTON -->
 <div id="filter-btn" onclick="toggleFilter()" style="
-  position:fixed; top:calc(max(env(safe-area-inset-top), 8px) + 58px); right:12px; z-index:1201;
+  position:fixed; top:calc(max(env(safe-area-inset-top), 8px) + 64px); right:12px; z-index:1201;
   width:44px; height:44px; border-radius:12px;
   background:rgba(10,10,10,0.82); border:1px solid var(--border2);
   display:flex; align-items:center; justify-content:center;
@@ -891,7 +844,7 @@ button.danger:hover { background: #1a0808; color: var(--red); border-color: #662
 
 <!-- FILTER PANEL -->
 <div id="filter-panel" style="
-  position:fixed; top:calc(max(env(safe-area-inset-top), 8px) + 58px); right:64px; z-index:1200;
+  position:fixed; top:calc(max(env(safe-area-inset-top), 8px) + 64px); right:64px; z-index:1200;
   background:rgba(10,10,10,0.93); border:1px solid var(--border2);
   border-radius:8px; padding:12px; min-width:180px;
   box-shadow:0 6px 30px rgba(0,0,0,0.8);
@@ -2723,55 +2676,72 @@ function drawSchussrichtungen() {
 //  GPS STANDORT
 // ═══════════════════════════════════════════
 const locationLayer = L.layerGroup().addTo(map);
+let locateMode = false;
 let locateWatchId = null;
-let lastKnownPos = null; // { lat, lng } – immer aktuell, auch ohne Button
+let locationMarker = null;
 
-// GPS läuft immer im Hintergrund, Karte bewegt sich NICHT automatisch
-function startLocateBackground() {
-  if (!navigator.geolocation) return;
+function toggleLocate() {
+  locateMode = !locateMode;
+  document.getElementById('btn-locate').classList.toggle('active', locateMode);
+  if (locateMode) {
+    startLocate();
+  } else {
+    stopLocate();
+  }
+}
+
+function startLocate() {
+  if (!navigator.geolocation) {
+    alert('GPS wird auf diesem Gerät nicht unterstützt.');
+    locateMode = false;
+    document.getElementById('btn-locate').classList.remove('active');
+    return;
+  }
   locateWatchId = navigator.geolocation.watchPosition(
     pos => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-      lastKnownPos = { lat, lng };
       locationLayer.clearLayers();
-      // Genauigkeitskreis
+      // Accuracy circle
       if (pos.coords.accuracy) {
         L.circle([lat, lng], {
           radius: pos.coords.accuracy,
-          color: '#4895ef', weight: 1, opacity: 0.4,
-          fillColor: '#4895ef', fillOpacity: 0.08
+          color: '#4895ef',
+          weight: 1,
+          opacity: 0.4,
+          fillColor: '#4895ef',
+          fillOpacity: 0.08
         }).addTo(locationLayer);
       }
-      // Standort-Punkt
+      // Position dot
       const icon = L.divIcon({
         html: '<div class="location-dot"></div>',
-        className: '', iconSize: [18, 18], iconAnchor: [9, 9]
+        className: '',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
       });
-      L.marker([lat, lng], { icon }).addTo(locationLayer);
+      locationMarker = L.marker([lat, lng], { icon }).addTo(locationLayer);
+      // Center map on first fix
+      if (!locationMarker._centered) {
+        map.setView([lat, lng], Math.max(map.getZoom(), 15));
+        locationMarker._centered = true;
+      }
     },
-    err => { console.warn('GPS Fehler:', err.message); },
-    { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    err => {
+      console.warn('GPS Fehler:', err.message);
+      if (err.code === 1) alert('Bitte GPS-Zugriff erlauben.');
+    },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
   );
 }
 
-// Button: einmalig zur aktuellen Position zentrieren, Zoom bleibt anpassbar
-function toggleLocate() {
-  if (!lastKnownPos) {
-    // Noch kein Fix – einmalige Abfrage als Fallback
-    if (!navigator.geolocation) { alert('GPS wird nicht unterstützt.'); return; }
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        lastKnownPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        map.setView([lastKnownPos.lat, lastKnownPos.lng], Math.max(map.getZoom(), 15));
-      },
-      err => { if (err.code === 1) alert('Bitte GPS-Zugriff erlauben.'); },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-    return;
+function stopLocate() {
+  if (locateWatchId !== null) {
+    navigator.geolocation.clearWatch(locateWatchId);
+    locateWatchId = null;
   }
-  // Karte auf letzten bekannten Standort zentrieren, Zoom unverändert
-  map.setView([lastKnownPos.lat, lastKnownPos.lng], Math.max(map.getZoom(), 15));
+  locationLayer.clearLayers();
+  locationMarker = null;
 }
 
 // ═══════════════════════════════════════════
@@ -4093,8 +4063,6 @@ function applyLayerFilter() {
   renderPirschwege();
   renderZentrum();
   flyToZentrum(getActiveRev());
-  // GPS automatisch im Hintergrund starten (Punkt anzeigen, Karte bewegt sich nicht)
-  startLocateBackground();
 
   // Realtime sync: refresh when another user makes changes
     // ── REVIERPOST ──
