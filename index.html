@@ -2706,21 +2706,51 @@ function drawSchussrichtungen() {
 }
 
 // ═══════════════════════════════════════════
-//  GPS STANDORT
+//  GPS STANDORT + ECHTZEIT-SHARING
 // ═══════════════════════════════════════════
 const locationLayer = L.layerGroup().addTo(map);
 let locateMode = false;
 let locateWatchId = null;
 let locationMarker = null;
+let locationRealtimeChannel = null;
+let otherUserMarkers = {}; // user_id -> { marker, circle }
+let currentUserId = null;
+let currentUserName = null;
+let locationCentered = false;
+
+// Farben für andere User — wird anhand user_id deterministisch gewählt
+const USER_COLORS = ['#4895ef','#52b788','#e63946','#f4d35e','#ee9b00','#9b5de5','#00bbf9','#f15bb5'];
+function userColor(userId) {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
+}
+
+// Initialisiere User-Identität aus Supabase Auth
+async function initUserIdentity() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && session.user) {
+    currentUserId = session.user.id;
+    // Name: user_metadata.name > email-Präfix
+    const meta = session.user.user_metadata || {};
+    currentUserName = meta.name || meta.display_name || meta.full_name
+      || session.user.email.split('@')[0];
+  }
+}
+initUserIdentity();
+
+function setGpsBtnState(active) {
+  document.getElementById('btn-locate').classList.toggle('active', active);
+  const gpsBtn = document.getElementById('gps-btn');
+  if (gpsBtn) {
+    gpsBtn.style.borderColor = active ? 'var(--accent)' : 'var(--border2)';
+    gpsBtn.style.color      = active ? 'var(--accent)' : 'var(--text)';
+  }
+}
 
 function toggleLocate() {
   locateMode = !locateMode;
-  document.getElementById('btn-locate').classList.toggle('active', locateMode);
-  const gpsBtn = document.getElementById('gps-btn');
-  if (gpsBtn) {
-    gpsBtn.style.borderColor = locateMode ? 'var(--accent)' : 'var(--border2)';
-    gpsBtn.style.color = locateMode ? 'var(--accent)' : 'var(--text)';
-  }
+  setGpsBtnState(locateMode);
   if (locateMode) {
     startLocate();
   } else {
@@ -2728,53 +2758,61 @@ function toggleLocate() {
   }
 }
 
-function startLocate() {
+async function startLocate() {
   if (!navigator.geolocation) {
     alert('GPS wird auf diesem Gerät nicht unterstützt.');
-    locateMode = false;
-    document.getElementById('btn-locate').classList.remove('active');
-    return;
+    locateMode = false; setGpsBtnState(false); return;
   }
+  // Ensure user identity loaded
+  if (!currentUserId) await initUserIdentity();
+
+  locationCentered = false;
+
   locateWatchId = navigator.geolocation.watchPosition(
-    pos => {
+    async pos => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
+      const acc = pos.coords.accuracy;
+
+      // ── Eigener Marker ──
       locationLayer.clearLayers();
-      // Accuracy circle
-      if (pos.coords.accuracy) {
+      if (acc) {
         L.circle([lat, lng], {
-          radius: pos.coords.accuracy,
-          color: '#4895ef',
-          weight: 1,
-          opacity: 0.4,
-          fillColor: '#4895ef',
-          fillOpacity: 0.08
+          radius: acc, color: '#4895ef', weight: 1,
+          opacity: 0.4, fillColor: '#4895ef', fillOpacity: 0.08
         }).addTo(locationLayer);
       }
-      // Position dot
-      const icon = L.divIcon({
+      const ownIcon = L.divIcon({
         html: '<div class="location-dot"></div>',
-        className: '',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
+        className: '', iconSize: [18, 18], iconAnchor: [9, 9]
       });
-      locationMarker = L.marker([lat, lng], { icon }).addTo(locationLayer);
-      // Center map on first fix
-      if (!locationMarker._centered) {
+      locationMarker = L.marker([lat, lng], { icon: ownIcon }).addTo(locationLayer);
+      if (!locationCentered) {
         map.setView([lat, lng], Math.max(map.getZoom(), 15));
-        locationMarker._centered = true;
+        locationCentered = true;
+      }
+
+      // ── In Supabase schreiben (upsert) ──
+      if (currentUserId) {
+        await sb.from('user_locations').upsert({
+          user_id:    currentUserId,
+          user_name:  currentUserName || 'Unbekannt',
+          lat, lng,
+          accuracy:   acc || null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
       }
     },
     err => {
       console.warn('GPS Fehler:', err.message);
       if (err.code === 1) alert('Bitte GPS-Zugriff erlauben.');
-      locateMode = false;
-      document.getElementById('btn-locate').classList.remove('active');
-      const gpsBtn = document.getElementById('gps-btn');
-      if (gpsBtn) { gpsBtn.style.borderColor = 'var(--border2)'; gpsBtn.style.color = 'var(--text)'; }
+      locateMode = false; setGpsBtnState(false);
     },
-    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+    { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
   );
+
+  // ── Realtime: andere User beobachten ──
+  startLocationRealtime();
 }
 
 function stopLocate() {
@@ -2784,7 +2822,121 @@ function stopLocate() {
   }
   locationLayer.clearLayers();
   locationMarker = null;
+  locationCentered = false;
+
+  // Eigene Position aus DB entfernen
+  if (currentUserId) {
+    sb.from('user_locations').delete().eq('user_id', currentUserId).then(() => {});
+  }
+
+  // Realtime beenden + andere Marker entfernen
+  stopLocationRealtime();
 }
+
+function startLocationRealtime() {
+  if (locationRealtimeChannel) return; // bereits aktiv
+
+  // Einmalig alle aktuellen Positionen laden
+  loadAllUserLocations();
+
+  locationRealtimeChannel = sb.channel('realtime:user_locations')
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'user_locations'
+    }, payload => {
+      if (payload.eventType === 'DELETE') {
+        removeOtherUserMarker(payload.old.user_id);
+      } else {
+        const row = payload.new;
+        if (row.user_id !== currentUserId) {
+          updateOtherUserMarker(row);
+        }
+      }
+    })
+    .subscribe();
+}
+
+function stopLocationRealtime() {
+  if (locationRealtimeChannel) {
+    sb.removeChannel(locationRealtimeChannel);
+    locationRealtimeChannel = null;
+  }
+  // Alle fremden Marker entfernen
+  Object.keys(otherUserMarkers).forEach(removeOtherUserMarker);
+}
+
+async function loadAllUserLocations() {
+  const { data: rows } = await sb.from('user_locations').select('*');
+  if (!rows) return;
+  // Alte Einträge (> 10 min) ignorieren
+  const cutoff = Date.now() - 10 * 60 * 1000;
+  rows.forEach(row => {
+    if (row.user_id === currentUserId) return;
+    if (new Date(row.updated_at).getTime() < cutoff) return;
+    updateOtherUserMarker(row);
+  });
+}
+
+function updateOtherUserMarker(row) {
+  const { user_id, user_name, lat, lng } = row;
+  const color = userColor(user_id);
+  const label = user_name || 'User';
+  const initials = label.slice(0, 2).toUpperCase();
+
+  // Marker-HTML: farbiger Kreis + Name-Badge
+  const html = `
+    <div style="display:flex;flex-direction:column;align-items:center;transform:translateX(-50%);">
+      <div style="
+        width:32px;height:32px;border-radius:50%;
+        background:${color};border:2.5px solid #fff;
+        display:flex;align-items:center;justify-content:center;
+        font-size:11px;font-weight:700;color:#fff;
+        box-shadow:0 2px 8px rgba(0,0,0,0.5);
+        font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
+      ">${initials}</div>
+      <div style="
+        margin-top:3px;background:rgba(10,10,10,0.85);
+        color:#fff;font-size:10px;font-weight:600;
+        padding:2px 6px;border-radius:6px;white-space:nowrap;
+        font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
+        box-shadow:0 1px 4px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);
+      ">${label}</div>
+    </div>`;
+
+  const icon = L.divIcon({ html, className: '', iconSize: [0, 0], iconAnchor: [0, 16] });
+
+  if (otherUserMarkers[user_id]) {
+    otherUserMarkers[user_id].marker.setLatLng([lat, lng]);
+    otherUserMarkers[user_id].marker.setIcon(icon);
+    if (otherUserMarkers[user_id].circle) {
+      otherUserMarkers[user_id].circle.setLatLng([lat, lng]);
+    }
+  } else {
+    const marker = L.marker([lat, lng], { icon }).addTo(map);
+    const circle = row.accuracy ? L.circle([lat, lng], {
+      radius: row.accuracy, color, weight: 1,
+      opacity: 0.3, fillColor: color, fillOpacity: 0.06
+    }).addTo(map) : null;
+    otherUserMarkers[user_id] = { marker, circle };
+  }
+}
+
+function removeOtherUserMarker(userId) {
+  if (otherUserMarkers[userId]) {
+    map.removeLayer(otherUserMarkers[userId].marker);
+    if (otherUserMarkers[userId].circle) map.removeLayer(otherUserMarkers[userId].circle);
+    delete otherUserMarkers[userId];
+  }
+}
+
+// Beim Verlassen der Seite eigene Position entfernen
+window.addEventListener('beforeunload', () => {
+  if (currentUserId && locateMode) {
+    navigator.sendBeacon
+      ? navigator.sendBeacon(`${SUPA_URL}/rest/v1/user_locations?user_id=eq.${currentUserId}`,
+          JSON.stringify({ method: 'DELETE' }))
+      : sb.from('user_locations').delete().eq('user_id', currentUserId);
+  }
+});
 
 // ═══════════════════════════════════════════
 //  ZOOM DISPLAY
